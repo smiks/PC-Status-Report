@@ -6,6 +6,8 @@ It can be used as a remote monitoring of your PC.
 It tries to read the CPU temperature in 2 different ways. If it gets the temperature it will report it,
 otherwise it will show None.
 
+Network speed is calculated using net_io_counters.
+
 Report sample:
 ```
 {
@@ -16,12 +18,12 @@ Report sample:
         "cpu": "Intel64 Family 6 Model 158 Stepping 13, GenuineIntel"
     },
     "current": {
-        "cpu_load": 5.2,
-        "gpu_load": 1,
-        "memory_load": 47.3,
+        "cpu_load": 6.6,
+        "gpu_load": 0,
+        "memory_load": 48.7,
         "cpu_temp": null,
         "cpu_temp_alt": null,
-        "gpu_temp": 48,
+        "gpu_temp": 51,
         "disks": {
             "C:\\": {
                 "free_gb": 42,
@@ -31,19 +33,23 @@ Report sample:
                 "free_gb": 133,
                 "free_perc": 86
             }
+        },
+        "network": {
+            "upload_kbps": 4,
+            "download_kbps": 51
         }
     },
     "history": {
         "cpu_load_avg": {
-            "1": 0,
+            "1": 13.345454545454544,
             "5": 0,
             "15": 0,
             "30": 0,
             "60": 0
         },
         "last_max_cpu_load": {
-            "load": 10.7,
-            "time": "2024-10-26 13:49:33"
+            "load": 25.5,
+            "time": "2024-10-26 13:59:00"
         }
     }
 }

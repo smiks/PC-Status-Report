@@ -118,6 +118,8 @@ def printStatistic():
     for path, du in metrics['disk_usages'].items():
         print("{}: {}" . format(path, du))
     print("\n")
+    print("Network speed: ", get_network_speed())
+    print("\n")
     print(f"CPU Temperature: {metrics['cpu_temperature']}°C" if metrics['cpu_temperature'] else "N/A")
     print(f"GPU Load: {metrics['gpu_load']}%" if metrics['gpu_load'] else "N/A")
     print("\n")
@@ -128,6 +130,29 @@ def printStatistic():
     for m, l in AVG_CPU_LOAD.items():
         print("\t Average CPU load in last {} minutes: {}%" . format(m, l))
 
+
+def get_network_speed(interval=1):
+    # Get initial bytes sent and received
+    net_io_start = psutil.net_io_counters()
+
+    # Pause for the specified interval
+    time.sleep(interval)
+
+    # Get new bytes sent and received
+    net_io_end = psutil.net_io_counters()
+
+    # Calculate upload and download speeds (bytes/sec)
+    upload_speed = (net_io_end.bytes_sent - net_io_start.bytes_sent) / interval
+    download_speed = (net_io_end.bytes_recv - net_io_start.bytes_recv) / interval
+
+    # Convert to kilobytes per second (KB/s)
+    upload_speed_kBps = round(upload_speed / 1024)
+    download_speed_kBps = round(download_speed / 1024)
+
+    return {
+        "upload_kBps": upload_speed_kBps,
+        "download_kBps": download_speed_kBps
+    }
 
 def getCpuAvg(cpuloads, cpu_count):
     if len(cpuloads) == 0:
@@ -206,7 +231,8 @@ def reportStatistic():
             "cpu_temp": metrics['cpu_temperature'],
             "cpu_temp_alt": metrics['cpu_temp_alt'],
             "gpu_temp": metrics['gpu_temp'],
-            "disks": { }
+            "disks": dict(),
+            "network": get_network_speed()
         },
         "history": {
             "cpu_load_avg": AVG_CPU_LOAD,
