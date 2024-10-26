@@ -57,10 +57,11 @@ TOTAL_NETWORK_TRANSFER = {
 }
 
 PRINT_TO_CONSOLE = True
+PRINT_REPORT_TIMESTAMPS = True
 
 def load_config():
     global API_ENDPOINT, API_TOKEN_NAME, API_TOKEN_VALUE, REPORT_FREQUENCY, DISK_USAGE_PATHS, RUN_CHECK_EVERY_SECONDS
-    global PRINT_TO_CONSOLE
+    global PRINT_TO_CONSOLE, PRINT_REPORT_TIMESTAMPS
     import json
 
     # Read the JSON file
@@ -73,6 +74,7 @@ def load_config():
         DISK_USAGE_PATHS = config['disk_usage_paths']
         RUN_CHECK_EVERY_SECONDS = config['run_check_every_seconds']
         PRINT_TO_CONSOLE = config['print_to_console']
+        PRINT_REPORT_TIMESTAMPS = config['print_report_timestamps']
 
 def get_system_metrics():
     global DISK_USAGE_PATHS
@@ -262,7 +264,7 @@ def reportStatistic():
     if time_now < LAST_REPORT_SEND:
         return
 
-    LAST_REPORT_SEND = time_now +REPORT_FREQUENCY * 60
+    LAST_REPORT_SEND = time_now + REPORT_FREQUENCY * 60
 
     metrics = get_system_metrics()
     hwinfo = getHardwareInfo()
@@ -306,7 +308,8 @@ def reportStatistic():
     if response.status_code != 200:
         print("Response code not OK")
     else:
-        print("Report sent at: {}" . format(current_datetime))
+        if PRINT_REPORT_TIMESTAMPS:
+            print("Report sent at: {}" . format(current_datetime))
 
 def _print(arg, *args):
     global PRINT_TO_CONSOLE
