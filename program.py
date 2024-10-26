@@ -1,11 +1,12 @@
-import psutil
-import GPUtil
 import platform
-import keyboard
-import requests
-
 import time
 from datetime import datetime
+
+import GPUtil
+import WinTmp
+import psutil
+import requests
+import keyboard
 
 AVG_CPU_LOAD = {
     "1": 0,
@@ -88,6 +89,8 @@ def get_system_metrics():
         "cpu_load": cpu_load,
         "memory_load": memory_load,
         "cpu_temperature": cpu_temp,
+        "cpu_temp_alt": WinTmp.CPU_Temp(),
+        "gpu_temp": WinTmp.GPU_Temp(),
         "gpu_load": gpu_load,
         "disk_usage_free_gb": round(disk_usage.free/1024**3),
         "disk_usage_perc": round(disk_usage.percent)
@@ -200,6 +203,8 @@ def reportStatistic():
             "gpu_load": metrics['gpu_load'],
             "memory_load": metrics['memory_load'],
             "cpu_temp": metrics['cpu_temperature'],
+            "cpu_temp_alt": metrics['cpu_temp_alt'],
+            "gpu_temp": metrics['gpu_temp'],
             "disk": {
                 "usage_free_gb": metrics['disk_usage_free_gb'],
                 "usage_perc": metrics['disk_usage_perc']
@@ -217,6 +222,7 @@ def reportStatistic():
     response = requests.post(API_ENDPOINT, json=report)
     if response.status_code != 200:
         print("Response code not OK")
+
 
 if __name__ == "__main__":
     print("\n\n")
