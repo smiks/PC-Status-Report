@@ -35,7 +35,7 @@ LAST_PERIOD_60 = PROGRAM_START_TIME + 60*60
 MAX_CPU_LOAD_PERC = 0
 MAX_CPU_LOAD_TIME = ""
 
-DISK_USAGE_PATH = "C:\\"
+DISK_USAGE_PATHS = ["C:\\"]
 
 API_ENDPOINT = ""
 API_TOKEN_NAME = ""
@@ -47,7 +47,7 @@ LAST_REPORT_SEND = 0
 RUN_CHECK_EVERY_SECONDS = 30
 
 def load_config():
-    global API_ENDPOINT, API_TOKEN_NAME, API_TOKEN_VALUE, REPORT_FREQUENCY, DISK_USAGE_PATH, RUN_CHECK_EVERY_SECONDS
+    global API_ENDPOINT, API_TOKEN_NAME, API_TOKEN_VALUE, REPORT_FREQUENCY, DISK_USAGE_PATHS, RUN_CHECK_EVERY_SECONDS
     import json
 
     # Read the JSON file
@@ -57,11 +57,11 @@ def load_config():
         API_TOKEN_NAME = config['api_token_name']
         API_TOKEN_VALUE = config['api_token_value']
         REPORT_FREQUENCY = config['send_report_every_mins']
-        DISK_USAGE_PATH = config['disk_usage_path']
+        DISK_USAGE_PATHS = config['disk_usage_paths']
         RUN_CHECK_EVERY_SECONDS = config['run_check_every_seconds']
 
 def get_system_metrics():
-    global DISK_USAGE_PATH
+    global DISK_USAGE_PATHS
     # CPU load
     cpu_load = psutil.cpu_percent(interval=1)
     cpu_count = psutil.cpu_count()
@@ -82,7 +82,8 @@ def get_system_metrics():
     gpu_load = gpu_info[0].load * 100 if gpu_info else None
 
     # disk load
-    disk_usage = psutil.disk_usage(DISK_USAGE_PATH)
+    disk_usages = {path: psutil.disk_usage(path) for path in DISK_USAGE_PATHS}
+    disk_usages = {path: {"free_gb": round(du.free/1024**3), "free_perc": round(du.percent)} for path, du in disk_usages.items()}
 
     return {
         "cpu_count": cpu_count,
@@ -92,8 +93,7 @@ def get_system_metrics():
         "cpu_temp_alt": WinTmp.CPU_Temp(),
         "gpu_temp": WinTmp.GPU_Temp(),
         "gpu_load": gpu_load,
-        "disk_usage_free_gb": round(disk_usage.free/1024**3),
-        "disk_usage_perc": round(disk_usage.percent)
+        "disk_usages": disk_usages
     }
 
 def getHardwareInfo():
@@ -114,8 +114,9 @@ def printStatistic():
     print(f"CPU Load: {metrics['cpu_load']}%")
     print(f"Memory Load: {metrics['memory_load']}%")
     print("\n")
-    print(f"Disk usage free [GB]: {metrics['disk_usage_free_gb']}")
-    print(f"Disk usage [%]: {metrics['disk_usage_perc']}")
+    print("Disks info:")
+    for path, du in metrics['disk_usages'].items():
+        print("{}: {}" . format(path, du))
     print("\n")
     print(f"CPU Temperature: {metrics['cpu_temperature']}°C" if metrics['cpu_temperature'] else "N/A")
     print(f"GPU Load: {metrics['gpu_load']}%" if metrics['gpu_load'] else "N/A")
@@ -205,10 +206,7 @@ def reportStatistic():
             "cpu_temp": metrics['cpu_temperature'],
             "cpu_temp_alt": metrics['cpu_temp_alt'],
             "gpu_temp": metrics['gpu_temp'],
-            "disk": {
-                "usage_free_gb": metrics['disk_usage_free_gb'],
-                "usage_perc": metrics['disk_usage_perc']
-            }
+            "disks": { }
         },
         "history": {
             "cpu_load_avg": AVG_CPU_LOAD,
@@ -218,6 +216,9 @@ def reportStatistic():
             }
         }
     }
+
+    for path, du in metrics['disk_usages'].items():
+        report['current']['disks'][path] = du
 
     response = requests.post(API_ENDPOINT, json=report)
     if response.status_code != 200:

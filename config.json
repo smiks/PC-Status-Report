@@ -4,5 +4,5 @@
   "api_token_value": "hiddenSomething",
   "send_report_every_mins": 1,
   "run_check_every_seconds": 5,
-  "disk_usage_path": "C:\\"
+  "disk_usage_paths": ["C:\\", "R:\\"]
 }

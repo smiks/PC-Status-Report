@@ -16,15 +16,21 @@ Report sample:
         "cpu": "Intel64 Family 6 Model 158 Stepping 13, GenuineIntel"
     },
     "current": {
-        "cpu_load": 12.3,
-        "gpu_load": 7.000000000000001,
-        "memory_load": 47,
+        "cpu_load": 5.2,
+        "gpu_load": 1,
+        "memory_load": 47.3,
         "cpu_temp": null,
         "cpu_temp_alt": null,
-        "gpu_temp": 49,
-        "disk": {
-            "usage_free_gb": 42,
-            "usage_perc": 91
+        "gpu_temp": 48,
+        "disks": {
+            "C:\\": {
+                "free_gb": 42,
+                "free_perc": 91
+            },
+            "R:\\": {
+                "free_gb": 133,
+                "free_perc": 86
+            }
         }
     },
     "history": {
@@ -36,8 +42,8 @@ Report sample:
             "60": 0
         },
         "last_max_cpu_load": {
-            "load": 22.6,
-            "time": "2024-10-26 13:25:54"
+            "load": 10.7,
+            "time": "2024-10-26 13:49:33"
         }
     }
 }
