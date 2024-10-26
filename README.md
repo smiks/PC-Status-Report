@@ -12,19 +12,19 @@ Report sample:
 ```
 {
     "token": "hiddenSomething",
-    "last_update": "2024-10-26 15:08:03",
+    "last_update": "2024-10-26 15:35:58",
     "system": {
         "cpu_count": 16,
         "system_info": "Windows",
         "cpu": "Intel64 Family 6 Model 158 Stepping 13, GenuineIntel"
     },
     "current": {
-        "cpu_load": 6.2,
-        "gpu_load": 2,
-        "memory_load": 47.7,
+        "cpu_load": 5,
+        "gpu_load": 0,
+        "memory_load": 47.5,
         "cpu_temp": null,
         "cpu_temp_alt": null,
-        "gpu_temp": 49,
+        "gpu_temp": 47,
         "disks": {
             "C:\\": {
                 "free_gb": 42,
@@ -36,8 +36,10 @@ Report sample:
             }
         },
         "network": {
-            "total_upload_kBps": 1,
-            "total_download_kBps": 1,
+            "total_upload_kBps": 3134,
+            "total_download_kBps": 3264,
+            "total_upload_kbps": 25072,
+            "total_download_kbps": 26112,
             "per_nic": {
                 "Ethernet": {
                     "upload_speed_kBps": 0,
@@ -76,8 +78,8 @@ Report sample:
                     "download_speed_kBps": 0
                 },
                 "Wi-Fi": {
-                    "upload_speed_kBps": 1,
-                    "download_speed_kBps": 1
+                    "upload_speed_kBps": 3134,
+                    "download_speed_kBps": 3264
                 },
                 "Bluetooth Network Connection": {
                     "upload_speed_kBps": 0,
@@ -96,22 +98,22 @@ Report sample:
     },
     "history": {
         "cpu_load_avg": {
-            "1": 6,
+            "1": 7,
             "5": 0,
             "15": 0,
             "30": 0,
             "60": 0
         },
         "last_max_cpu_load": {
-            "load": 10.3,
-            "time": "2024-10-26 15:07:41"
+            "load": 11.8,
+            "time": "2024-10-26 15:34:53"
         },
         "network": {
             "total_transfer": {
-                "download": 3,
-                "upload": 116,
+                "download": 5,
+                "upload": 1,
                 "download_unit": "GB",
-                "upload_unit": "MB"
+                "upload_unit": "GB"
             }
         }
     }
