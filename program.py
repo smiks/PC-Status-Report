@@ -202,6 +202,8 @@ def get_network_speed():
     stats = {
         "total_upload_kBps": total_upload_kBps,
         "total_download_kBps": total_download_kBps,
+        "total_upload_kbps": total_upload_kBps*8,
+        "total_download_kbps": total_download_kBps*8,
         "per_nic": stats
     }
     return stats
