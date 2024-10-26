@@ -267,8 +267,11 @@ def reportStatistic():
     metrics = get_system_metrics()
     hwinfo = getHardwareInfo()
 
+    current_datetime = datetime.now()
+
     report = {
         API_TOKEN_NAME: API_TOKEN_VALUE,
+        "last_update": current_datetime.strftime("%Y-%m-%d %H:%M:%S"),
         "system": {
             "cpu_count": metrics['cpu_count'],
             "system_info": hwinfo['system'],
@@ -302,6 +305,8 @@ def reportStatistic():
     response = requests.post(API_ENDPOINT, json=report)
     if response.status_code != 200:
         print("Response code not OK")
+    else:
+        print("Report sent at: {}" . format(current_datetime))
 
 def _print(arg, *args):
     global PRINT_TO_CONSOLE
