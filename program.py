@@ -174,8 +174,8 @@ def get_network_speed():
             "download_speed_kBps": download_speed_kBps
         }
 
-        TOTAL_NETWORK_TRANSFER['download'] = s.bytes_recv
-        TOTAL_NETWORK_TRANSFER['upload'] = s.bytes_sent
+        TOTAL_NETWORK_TRANSFER['download'] += s.bytes_recv
+        TOTAL_NETWORK_TRANSFER['upload'] += s.bytes_sent
 
     if TOTAL_NETWORK_TRANSFER['download'] > 1024:
         TOTAL_NETWORK_TRANSFER['download'] = TOTAL_NETWORK_TRANSFER['download'] // 1024
