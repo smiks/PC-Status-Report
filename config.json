@@ -4,5 +4,6 @@
   "api_token_value": "hiddenSomething",
   "send_report_every_mins": 1,
   "run_check_every_seconds": 5,
-  "disk_usage_paths": ["C:\\", "R:\\"]
+  "disk_usage_paths": ["C:\\", "R:\\"],
+  "print_to_console": false
 }

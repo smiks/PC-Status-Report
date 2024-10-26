@@ -18,12 +18,12 @@ Report sample:
         "cpu": "Intel64 Family 6 Model 158 Stepping 13, GenuineIntel"
     },
     "current": {
-        "cpu_load": 6.6,
+        "cpu_load": 8.7,
         "gpu_load": 0,
-        "memory_load": 48.7,
+        "memory_load": 46.6,
         "cpu_temp": null,
         "cpu_temp_alt": null,
-        "gpu_temp": 51,
+        "gpu_temp": 48,
         "disks": {
             "C:\\": {
                 "free_gb": 42,
@@ -35,21 +35,83 @@ Report sample:
             }
         },
         "network": {
-            "upload_kbps": 4,
-            "download_kbps": 51
+            "total_upload_kBps": 7,
+            "total_download_kBps": 12,
+            "per_nic": {
+                "Ethernet": {
+                    "upload_speed_kBps": 0,
+                    "download_speed_kBps": 0
+                },
+                "Ethernet 2": {
+                    "upload_speed_kBps": 0,
+                    "download_speed_kBps": 0
+                },
+                "Local Area Connection": {
+                    "upload_speed_kBps": 0,
+                    "download_speed_kBps": 0
+                },
+                "Ethernet 3": {
+                    "upload_speed_kBps": 0,
+                    "download_speed_kBps": 0
+                },
+                "Ethernet 4": {
+                    "upload_speed_kBps": 0,
+                    "download_speed_kBps": 0
+                },
+                "OpenVPN Data Channel Offload for NordVPN": {
+                    "upload_speed_kBps": 0,
+                    "download_speed_kBps": 0
+                },
+                "Local Area Connection 2": {
+                    "upload_speed_kBps": 0,
+                    "download_speed_kBps": 0
+                },
+                "Local Area Connection* 1": {
+                    "upload_speed_kBps": 0,
+                    "download_speed_kBps": 0
+                },
+                "Local Area Connection* 10": {
+                    "upload_speed_kBps": 0,
+                    "download_speed_kBps": 0
+                },
+                "Wi-Fi": {
+                    "upload_speed_kBps": 7,
+                    "download_speed_kBps": 12
+                },
+                "Bluetooth Network Connection": {
+                    "upload_speed_kBps": 0,
+                    "download_speed_kBps": 0
+                },
+                "Loopback Pseudo-Interface 1": {
+                    "upload_speed_kBps": 0,
+                    "download_speed_kBps": 0
+                },
+                "vEthernet (WSLCore)": {
+                    "upload_speed_kBps": 0,
+                    "download_speed_kBps": 0
+                }
+            }
         }
     },
     "history": {
         "cpu_load_avg": {
-            "1": 13.345454545454544,
+            "1": 7,
             "5": 0,
             "15": 0,
             "30": 0,
             "60": 0
         },
         "last_max_cpu_load": {
-            "load": 25.5,
-            "time": "2024-10-26 13:59:00"
+            "load": 11.1,
+            "time": "2024-10-26 14:49:00"
+        },
+        "network": {
+            "total_transfer": {
+                "download": 220,
+                "upload": 9,
+                "download_unit": "KB",
+                "upload_unit": "MB"
+            }
         }
     }
 }

@@ -26,6 +26,7 @@ CPU_LOADS_ARCH = {
 }
 
 PROGRAM_START_TIME = time.time()
+
 LAST_PERIOD_1 = PROGRAM_START_TIME + 60
 LAST_PERIOD_5 = PROGRAM_START_TIME + 5*60
 LAST_PERIOD_15 = PROGRAM_START_TIME + 15*60
@@ -46,8 +47,20 @@ LAST_REPORT_SEND = 0
 
 RUN_CHECK_EVERY_SECONDS = 30
 
+NET_IO_START = dict()
+NET_IO_END = dict()
+TOTAL_NETWORK_TRANSFER = {
+    "download": 0,
+    "upload": 0,
+    "download_unit": "B",
+    "upload_unit": "B"
+}
+
+PRINT_TO_CONSOLE = True
+
 def load_config():
     global API_ENDPOINT, API_TOKEN_NAME, API_TOKEN_VALUE, REPORT_FREQUENCY, DISK_USAGE_PATHS, RUN_CHECK_EVERY_SECONDS
+    global PRINT_TO_CONSOLE
     import json
 
     # Read the JSON file
@@ -59,6 +72,7 @@ def load_config():
         REPORT_FREQUENCY = config['send_report_every_mins']
         DISK_USAGE_PATHS = config['disk_usage_paths']
         RUN_CHECK_EVERY_SECONDS = config['run_check_every_seconds']
+        PRINT_TO_CONSOLE = config['print_to_console']
 
 def get_system_metrics():
     global DISK_USAGE_PATHS
@@ -85,6 +99,8 @@ def get_system_metrics():
     disk_usages = {path: psutil.disk_usage(path) for path in DISK_USAGE_PATHS}
     disk_usages = {path: {"free_gb": round(du.free/1024**3), "free_perc": round(du.percent)} for path, du in disk_usages.items()}
 
+    network = get_network_speed()
+
     return {
         "cpu_count": cpu_count,
         "cpu_load": cpu_load,
@@ -93,7 +109,8 @@ def get_system_metrics():
         "cpu_temp_alt": WinTmp.CPU_Temp(),
         "gpu_temp": WinTmp.GPU_Temp(),
         "gpu_load": gpu_load,
-        "disk_usages": disk_usages
+        "disk_usages": disk_usages,
+        "network": network
     }
 
 def getHardwareInfo():
@@ -109,56 +126,89 @@ def printStatistic():
     global AVG_CPU_LOAD
 
     metrics = get_system_metrics()
-    print("System Metrics:")
-    print(f"CPU Count: {metrics['cpu_count']} threads")
-    print(f"CPU Load: {metrics['cpu_load']}%")
-    print(f"Memory Load: {metrics['memory_load']}%")
-    print("\n")
-    print("Disks info:")
+    _print("System Metrics:")
+    _print(f"CPU Count: {metrics['cpu_count']} threads")
+    _print(f"CPU Load: {metrics['cpu_load']}%")
+    _print(f"Memory Load: {metrics['memory_load']}%")
+    _print("\n")
+    _print("Disks info:")
     for path, du in metrics['disk_usages'].items():
-        print("{}: {}" . format(path, du))
-    print("\n")
-    print("Network speed: ", get_network_speed())
-    print("\n")
-    print(f"CPU Temperature: {metrics['cpu_temperature']}°C" if metrics['cpu_temperature'] else "N/A")
-    print(f"GPU Load: {metrics['gpu_load']}%" if metrics['gpu_load'] else "N/A")
-    print("\n")
-    print("Last Max CPU LOAD [%]: ", MAX_CPU_LOAD_PERC)
-    print("Last Max CPU LOAD @: ", MAX_CPU_LOAD_TIME)
-    print("\n")
-    print("Average CPU Load: ")
+        _print("{}: {}" . format(path, du))
+    _print("\n")
+    _print("Network speed: ")
+    _print("\t Total download: ", metrics['network']['total_download_kBps'])
+    _print("\t Total upload: ", metrics['network']['total_upload_kBps'])
+    _print("\n")
+    _print(f"CPU Temperature: {metrics['cpu_temperature']}°C" if metrics['cpu_temperature'] else "N/A")
+    _print(f"GPU Load: {metrics['gpu_load']}%" if metrics['gpu_load'] else "N/A")
+    _print("\n")
+    _print("Last Max CPU LOAD [%]: ", MAX_CPU_LOAD_PERC)
+    _print("Last Max CPU LOAD @: ", MAX_CPU_LOAD_TIME)
+    _print("\n")
+    _print("Average CPU Load: ")
     for m, l in AVG_CPU_LOAD.items():
-        print("\t Average CPU load in last {} minutes: {}%" . format(m, l))
+        _print("\t Average CPU load in last {} minutes: {}%" . format(m, l))
+
+    _print("-----" * 20)
+
+def get_network_speed():
+    global NET_IO_START, NET_IO_END, RUN_CHECK_EVERY_SECONDS, TOTAL_NETWORK_TRANSFER
 
 
-def get_network_speed(interval=1):
-    # Get initial bytes sent and received
-    net_io_start = psutil.net_io_counters()
+    nics = [nic for nic in NET_IO_START.keys()]
 
-    # Pause for the specified interval
-    time.sleep(interval)
+    stats = dict()
+    total_upload_kBps = 0
+    total_download_kBps = 0
 
-    # Get new bytes sent and received
-    net_io_end = psutil.net_io_counters()
+    for nic in nics:
+        s, e = NET_IO_START[nic], NET_IO_END[nic]
+        upload_speed = abs(e.bytes_sent - s.bytes_sent) / RUN_CHECK_EVERY_SECONDS
+        download_speed = abs(e.bytes_recv - s.bytes_recv) / RUN_CHECK_EVERY_SECONDS
+        upload_speed_kBps = upload_speed // 1024
+        download_speed_kBps = download_speed // 1024
+        total_upload_kBps += upload_speed_kBps
+        total_download_kBps += download_speed_kBps
+        stats[nic] = {
+            "upload_speed_kBps": upload_speed_kBps,
+            "download_speed_kBps": download_speed_kBps
+        }
 
-    # Calculate upload and download speeds (bytes/sec)
-    upload_speed = (net_io_end.bytes_sent - net_io_start.bytes_sent) / interval
-    download_speed = (net_io_end.bytes_recv - net_io_start.bytes_recv) / interval
+        TOTAL_NETWORK_TRANSFER['download'] = s.bytes_recv
+        TOTAL_NETWORK_TRANSFER['upload'] = s.bytes_sent
 
-    # Convert to kilobytes per second (KB/s)
-    upload_speed_kBps = round(upload_speed / 1024)
-    download_speed_kBps = round(download_speed / 1024)
+    if TOTAL_NETWORK_TRANSFER['download'] > 1024:
+        TOTAL_NETWORK_TRANSFER['download'] = TOTAL_NETWORK_TRANSFER['download'] // 1024
+        TOTAL_NETWORK_TRANSFER['download_unit'] = 'KB'
+    if TOTAL_NETWORK_TRANSFER['download'] > 1024:
+        TOTAL_NETWORK_TRANSFER['download'] = TOTAL_NETWORK_TRANSFER['download'] // 1024
+        TOTAL_NETWORK_TRANSFER['download_unit'] = 'MB'
+    if TOTAL_NETWORK_TRANSFER['download'] > 1024:
+        TOTAL_NETWORK_TRANSFER['download'] = TOTAL_NETWORK_TRANSFER['download'] // 1024
+        TOTAL_NETWORK_TRANSFER['download_unit'] = 'GB'
 
-    return {
-        "upload_kBps": upload_speed_kBps,
-        "download_kBps": download_speed_kBps
+    if TOTAL_NETWORK_TRANSFER['upload'] > 1024:
+        TOTAL_NETWORK_TRANSFER['upload'] = TOTAL_NETWORK_TRANSFER['upload'] // 1024
+        TOTAL_NETWORK_TRANSFER['upload_unit'] = 'KB'
+    if TOTAL_NETWORK_TRANSFER['upload'] > 1024:
+        TOTAL_NETWORK_TRANSFER['upload'] = TOTAL_NETWORK_TRANSFER['upload'] // 1024
+        TOTAL_NETWORK_TRANSFER['upload_unit'] = 'MB'
+    if TOTAL_NETWORK_TRANSFER['upload'] > 1024:
+        TOTAL_NETWORK_TRANSFER['upload'] = TOTAL_NETWORK_TRANSFER['upload'] // 1024
+        TOTAL_NETWORK_TRANSFER['upload_unit'] = 'GB'
+
+    stats = {
+        "total_upload_kBps": total_upload_kBps,
+        "total_download_kBps": total_download_kBps,
+        "per_nic": stats
     }
+    return stats
 
 def getCpuAvg(cpuloads, cpu_count):
     if len(cpuloads) == 0:
         return 0
     avg = sum(cpuloads)/len(cpuloads)
-    return avg
+    return round(avg)
 def analyze():
     global LAST_PERIOD_1, LAST_PERIOD_5, LAST_PERIOD_15, LAST_PERIOD_30, LAST_PERIOD_60
     global CPU_LOADS_ARCH, MAX_CPU_LOAD_PERC, MAX_CPU_LOAD_TIME
@@ -232,13 +282,16 @@ def reportStatistic():
             "cpu_temp_alt": metrics['cpu_temp_alt'],
             "gpu_temp": metrics['gpu_temp'],
             "disks": dict(),
-            "network": get_network_speed()
+            "network": metrics['network']
         },
         "history": {
             "cpu_load_avg": AVG_CPU_LOAD,
             "last_max_cpu_load": {
                 "load": MAX_CPU_LOAD_PERC,
                 "time": MAX_CPU_LOAD_TIME
+            },
+            "network": {
+                "total_transfer": TOTAL_NETWORK_TRANSFER
             }
         }
     }
@@ -250,6 +303,10 @@ def reportStatistic():
     if response.status_code != 200:
         print("Response code not OK")
 
+def _print(arg, *args):
+    global PRINT_TO_CONSOLE
+    if PRINT_TO_CONSOLE:
+        print(arg, *args)
 
 if __name__ == "__main__":
     print("\n\n")
@@ -264,6 +321,7 @@ if __name__ == "__main__":
     print("\t Config is loaded...")
     print("\n")
     print("Run analyze every {} second(s)" . format(RUN_CHECK_EVERY_SECONDS))
+    print("Output to console is set to: ", PRINT_TO_CONSOLE)
     print("\n")
     hwinfo = getHardwareInfo()
     print("CPU: ", hwinfo['cpu'])
@@ -272,13 +330,14 @@ if __name__ == "__main__":
     last_check = 0
     while True:
         time_now = time.time()
-
+        NET_IO_END = psutil.net_io_counters(pernic=True)
         # run analyze every RUN_CHECK_EVERY_SECONDS seconds
         if time_now > last_check:
             printStatistic()
             analyze()
             last_check = time_now + RUN_CHECK_EVERY_SECONDS
             reportStatistic()
+            NET_IO_START = psutil.net_io_counters(pernic=True)
 
         time.sleep(2)
         # Check if 'Q' has been pressed to exit
