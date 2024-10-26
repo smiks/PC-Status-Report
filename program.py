@@ -58,6 +58,7 @@ def load_config():
         REPORT_FREQUENCY = config['send_report_every_mins']
         DISK_USAGE_PATH = config['disk_usage_path']
         RUN_CHECK_EVERY_SECONDS = config['run_check_every_seconds']
+
 def get_system_metrics():
     global DISK_USAGE_PATH
     # CPU load
@@ -129,8 +130,6 @@ def getCpuAvg(cpuloads, cpu_count):
         return 0
     avg = sum(cpuloads)/len(cpuloads)
     return avg
-    #print("CPU LOADS: ", cpuloads)
-    #return ( (avg /  cpu_count) * 100 )
 def analyze():
     global LAST_PERIOD_1, LAST_PERIOD_5, LAST_PERIOD_15, LAST_PERIOD_30, LAST_PERIOD_60
     global CPU_LOADS_ARCH, MAX_CPU_LOAD_PERC, MAX_CPU_LOAD_TIME
@@ -202,7 +201,7 @@ def reportStatistic():
             "memory_load": metrics['memory_load'],
             "cpu_temp": metrics['cpu_temperature'],
             "disk": {
-                "usage_gb": metrics['disk_usage_free_gb'],
+                "usage_free_gb": metrics['disk_usage_free_gb'],
                 "usage_perc": metrics['disk_usage_perc']
             }
         },
