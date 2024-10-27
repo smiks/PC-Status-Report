@@ -213,12 +213,12 @@ class HwInfoReport:
 
         return {
             "cpu_count": cpu_count,
-            "cpu_load": cpu_load,
-            "memory_load": memory_load,
+            "cpu_load": round(cpu_load, 2),
+            "memory_load": round(memory_load, 2),
             "cpu_temperature": cpu_temp,
             "cpu_temp_alt": WinTmp.CPU_Temp(),
             "gpu_temp": WinTmp.GPU_Temp(),
-            "gpu_load": gpu_load,
+            "gpu_load": round(gpu_load, 2),
             "disk_usages": disk_usages,
             "disk_total_free_gb": disk_total_free_gb,
             "network": network,
