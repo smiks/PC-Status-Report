@@ -23,7 +23,7 @@ class HwInfoReport:
             print(arg, *args)
 
     def __init__(self):
-        self.version = "1.1"
+        self.version = "1.2"
         self.AVG_CPU_LOAD = {
             "1": 0,
             "5": 0,
@@ -91,6 +91,8 @@ class HwInfoReport:
             self.RUN_CHECK_EVERY_SECONDS = config['run_check_every_seconds']
             self.PRINT_TO_CONSOLE = config['print_to_console']
             self.PRINT_REPORT_TIMESTAMPS = config['print_report_timestamps']
+            self.MAX_NET_DOWNLINK_KBPS = config['max_net_downlink_kbps']
+            self.MAX_NET_UPLINK_KBPS = config['max_net_uplink_kbps']
 
         print("\t\t Run analyze every {} second(s)" . format(self.RUN_CHECK_EVERY_SECONDS))
         print("\t\t Output to console is set to: ", self.PRINT_TO_CONSOLE)
@@ -163,11 +165,15 @@ class HwInfoReport:
             self.MAX_NET_UPLOAD = total_upload_kBps*8
             self.MAX_NET_UPLOAD_TIME = current_datetime.strftime("%Y-%m-%d %H:%M:%S")
 
+        download_kbps = total_download_kBps * 8
+        upload_kbps = total_upload_kBps * 8
         stats = {
-            "total_upload_kBps": total_upload_kBps,
             "total_download_kBps": total_download_kBps,
-            "total_upload_kbps": total_upload_kBps * 8,
-            "total_download_kbps": total_download_kBps * 8,
+            "total_upload_kBps": total_upload_kBps,
+            "total_download_kbps": download_kbps,
+            "total_upload_kbps": upload_kbps,
+            "download_usage_perc": round(download_kbps / self.MAX_NET_DOWNLINK_KBPS, 2),
+            "upload_usage_perc": round(upload_kbps / self.MAX_NET_DOWNLINK_KBPS, 2),
             "per_nic": stats
         }
         return stats

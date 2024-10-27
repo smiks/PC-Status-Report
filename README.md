@@ -1,4 +1,4 @@
-# PC-Status-Report v1.1
+# PC-Status-Report v1.2
 
 A simple Python program that gathers your system's info and sends it to the endpoint you define in config.json.
 It can be used as a remote monitoring of your PC.
@@ -17,6 +17,7 @@ Requirements:
 - psutil
 - requests
 - platform
+- keyboard
 
 #
 
@@ -24,27 +25,27 @@ Report sample:
 ```
 {
     "token": "hiddenSomething",
-    "version": "1.1",
-    "last_update": "2024-10-27 15:26:53",
-    "report_runtime": "1min",
+    "version": "1.2",
+    "last_update": "2024-10-27 22:10:51",
+    "report_runtime": "4 min",
     "system": {
         "cpu_count": 16,
         "system_info": "Windows",
         "cpu": "Intel64 Family 6 Model 158 Stepping 13, GenuineIntel"
     },
     "current": {
-        "cpu_load": 9.4,
-        "gpu_load": 7.000000000000001,
-        "memory_load": 48.3,
+        "cpu_load": 10,
+        "gpu_load": 1,
+        "memory_load": 47.1,
         "cpu_temp": null,
         "cpu_temp_alt": null,
-        "gpu_temp": 51,
+        "gpu_temp": 49,
         "disks": {
-            "total_free_gb": 174,
+            "total_free_gb": 172,
             "per_disk": {
                 "C:\\": {
-                    "free_gb": 41,
-                    "free_perc": 91
+                    "free_gb": 39,
+                    "free_perc": 92
                 },
                 "R:\\": {
                     "free_gb": 133,
@@ -53,10 +54,12 @@ Report sample:
             }
         },
         "network": {
-            "total_upload_kBps": 2,
-            "total_download_kBps": 32,
-            "total_upload_kbps": 16,
-            "total_download_kbps": 256,
+            "total_download_kBps": 104,
+            "total_upload_kBps": 6,
+            "total_download_kbps": 832,
+            "total_upload_kbps": 48,
+            "download_usage_perc": 0,
+            "upload_usage_perc": 0,
             "per_nic": {
                 "Ethernet": {
                     "upload_speed_kBps": 0,
@@ -95,8 +98,8 @@ Report sample:
                     "download_speed_kBps": 0
                 },
                 "Wi-Fi": {
-                    "upload_speed_kBps": 2,
-                    "download_speed_kBps": 32
+                    "upload_speed_kBps": 6,
+                    "download_speed_kBps": 104
                 },
                 "Bluetooth Network Connection": {
                     "upload_speed_kBps": 0,
@@ -116,30 +119,30 @@ Report sample:
     },
     "history": {
         "cpu_load_avg": {
-            "1": 8,
+            "1": 9,
             "5": 0,
             "15": 0,
             "30": 0,
             "60": 0
         },
         "last_max_cpu_load": {
-            "load": 11.1,
-            "time": "2024-10-27 15:25:49"
+            "load": 20.7,
+            "time": "2024-10-27 22:10:50"
         },
         "network": {
             "total_transfer": {
-                "download": 2,
-                "upload": 102,
+                "download": 10,
+                "upload": 284,
                 "download_unit": "GB",
                 "upload_unit": "MB"
             },
             "download_peak": {
-                "rate_kbps": 360,
-                "time": "2024-10-27 15:26:30"
+                "rate_kbps": 4872,
+                "time": "2024-10-27 22:06:58"
             },
             "upload_peak": {
-                "rate_kbps": 88,
-                "time": "2024-10-27 15:26:30"
+                "rate_kbps": 168,
+                "time": "2024-10-27 22:08:32"
             }
         }
     }

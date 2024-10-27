@@ -6,5 +6,7 @@
   "run_check_every_seconds": 5,
   "disk_usage_paths": ["C:\\", "R:\\"],
   "print_to_console": false,
-  "print_report_timestamps": false
+  "print_report_timestamps": false,
+  "max_net_downlink_kbps": 500000,
+  "max_net_uplink_kbps": 100000
 }
