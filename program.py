@@ -1,6 +1,7 @@
 import platform
 import time
 from datetime import datetime
+from json import load as jsload
 
 import GPUtil
 import WinTmp
@@ -8,350 +9,401 @@ import psutil
 import requests
 import keyboard
 
-AVG_CPU_LOAD = {
-    "1": 0,
-    "5": 0,
-    "15": 0,
-    "30": 0,
-    "60": 0
-}
+class HwInfoReport:
+    def about(self):
+        print("\n\n")
+        print("\t Hardware monitoring and reporting system by Sandi")
+        print("\t Version: {}" . format(self.version))
+        print("\n\n")
+        print("\t To exit the program, hold 'Q', or you know... the good old CTRL+C")
+        print("\n")
 
-# CPU LOAD ARCHIVE
-CPU_LOADS_ARCH = {
-    "1": [],
-    "5": [],
-    "15": [],
-    "30": [],
-    "60": []
-}
+    def _print(self, arg, *args):
+        if self.PRINT_TO_CONSOLE:
+            print(arg, *args)
 
-PROGRAM_START_TIME = time.time()
-
-LAST_PERIOD_1 = PROGRAM_START_TIME + 60
-LAST_PERIOD_5 = PROGRAM_START_TIME + 5*60
-LAST_PERIOD_15 = PROGRAM_START_TIME + 15*60
-LAST_PERIOD_30 = PROGRAM_START_TIME + 30*60
-LAST_PERIOD_60 = PROGRAM_START_TIME + 60*60
-
-MAX_CPU_LOAD_PERC = 0
-MAX_CPU_LOAD_TIME = ""
-
-DISK_USAGE_PATHS = ["C:\\"]
-
-API_ENDPOINT = ""
-API_TOKEN_NAME = ""
-API_TOKEN_VALUE = ""
-REPORT_FREQUENCY = 99
-
-LAST_REPORT_SEND = 0
-
-RUN_CHECK_EVERY_SECONDS = 30
-
-NET_IO_START = dict()
-NET_IO_END = dict()
-TOTAL_NETWORK_TRANSFER = {
-    "download": 0,
-    "upload": 0,
-    "download_unit": "B",
-    "upload_unit": "B"
-}
-
-PRINT_TO_CONSOLE = True
-PRINT_REPORT_TIMESTAMPS = True
-
-def load_config():
-    global API_ENDPOINT, API_TOKEN_NAME, API_TOKEN_VALUE, REPORT_FREQUENCY, DISK_USAGE_PATHS, RUN_CHECK_EVERY_SECONDS
-    global PRINT_TO_CONSOLE, PRINT_REPORT_TIMESTAMPS
-    import json
-
-    # Read the JSON file
-    with open("config.json", "r") as file:
-        config = json.load(file)
-        API_ENDPOINT = config['api_endpoint']
-        API_TOKEN_NAME = config['api_token_name']
-        API_TOKEN_VALUE = config['api_token_value']
-        REPORT_FREQUENCY = config['send_report_every_mins']
-        DISK_USAGE_PATHS = config['disk_usage_paths']
-        RUN_CHECK_EVERY_SECONDS = config['run_check_every_seconds']
-        PRINT_TO_CONSOLE = config['print_to_console']
-        PRINT_REPORT_TIMESTAMPS = config['print_report_timestamps']
-
-def get_system_metrics():
-    global DISK_USAGE_PATHS
-    # CPU load
-    cpu_load = psutil.cpu_percent(interval=1)
-    cpu_count = psutil.cpu_count()
-
-    # Memory load
-    memory_info = psutil.virtual_memory()
-    memory_load = memory_info.percent
-
-    # CPU temperature (Linux, needs 'sensors' module; may not work on all systems)
-    if hasattr(psutil, "sensors_temperatures"):
-        cpu_temp_info = psutil.sensors_temperatures().get("coretemp", [])
-        cpu_temp = cpu_temp_info[0].current if cpu_temp_info else None
-    else:
-        cpu_temp = None
-
-    # GPU load (using GPUtil)
-    gpu_info = GPUtil.getGPUs()
-    gpu_load = gpu_info[0].load * 100 if gpu_info else None
-
-    # disk load
-    disk_usages = {path: psutil.disk_usage(path) for path in DISK_USAGE_PATHS}
-    disk_usages = {path: {"free_gb": round(du.free/1024**3), "free_perc": round(du.percent)} for path, du in disk_usages.items()}
-
-    network = get_network_speed()
-
-    return {
-        "cpu_count": cpu_count,
-        "cpu_load": cpu_load,
-        "memory_load": memory_load,
-        "cpu_temperature": cpu_temp,
-        "cpu_temp_alt": WinTmp.CPU_Temp(),
-        "gpu_temp": WinTmp.GPU_Temp(),
-        "gpu_load": gpu_load,
-        "disk_usages": disk_usages,
-        "network": network
-    }
-
-def getHardwareInfo():
-    cpu = platform.processor()
-    system = platform.system()
-
-    return {
-        "cpu": cpu,
-        "system": system
-    }
-
-def printStatistic():
-    global AVG_CPU_LOAD
-
-    metrics = get_system_metrics()
-    _print("System Metrics:")
-    _print(f"CPU Count: {metrics['cpu_count']} threads")
-    _print(f"CPU Load: {metrics['cpu_load']}%")
-    _print(f"Memory Load: {metrics['memory_load']}%")
-    _print("\n")
-    _print("Disks info:")
-    for path, du in metrics['disk_usages'].items():
-        _print("{}: {}" . format(path, du))
-    _print("\n")
-    _print("Network speed: ")
-    _print("\t Total download: ", metrics['network']['total_download_kBps'])
-    _print("\t Total upload: ", metrics['network']['total_upload_kBps'])
-    _print("\n")
-    _print(f"CPU Temperature: {metrics['cpu_temperature']}°C" if metrics['cpu_temperature'] else "N/A")
-    _print(f"GPU Load: {metrics['gpu_load']}%" if metrics['gpu_load'] else "N/A")
-    _print("\n")
-    _print("Last Max CPU LOAD [%]: ", MAX_CPU_LOAD_PERC)
-    _print("Last Max CPU LOAD @: ", MAX_CPU_LOAD_TIME)
-    _print("\n")
-    _print("Average CPU Load: ")
-    for m, l in AVG_CPU_LOAD.items():
-        _print("\t Average CPU load in last {} minutes: {}%" . format(m, l))
-
-    _print("-----" * 20)
-
-def get_network_speed():
-    global NET_IO_START, NET_IO_END, RUN_CHECK_EVERY_SECONDS, TOTAL_NETWORK_TRANSFER
-
-
-    nics = [nic for nic in NET_IO_START.keys()]
-
-    stats = dict()
-    total_upload_kBps = 0
-    total_download_kBps = 0
-
-    for nic in nics:
-        s, e = NET_IO_START[nic], NET_IO_END[nic]
-        upload_speed = abs(e.bytes_sent - s.bytes_sent) / RUN_CHECK_EVERY_SECONDS
-        download_speed = abs(e.bytes_recv - s.bytes_recv) / RUN_CHECK_EVERY_SECONDS
-        upload_speed_kBps = upload_speed // 1024
-        download_speed_kBps = download_speed // 1024
-        total_upload_kBps += upload_speed_kBps
-        total_download_kBps += download_speed_kBps
-        stats[nic] = {
-            "upload_speed_kBps": upload_speed_kBps,
-            "download_speed_kBps": download_speed_kBps
+    def __init__(self):
+        self.version = "1.1"
+        self.AVG_CPU_LOAD = {
+            "1": 0,
+            "5": 0,
+            "15": 0,
+            "30": 0,
+            "60": 0
         }
 
-        TOTAL_NETWORK_TRANSFER['download'] += s.bytes_recv
-        TOTAL_NETWORK_TRANSFER['upload'] += s.bytes_sent
+        # CPU LOAD ARCHIVE
+        self.CPU_LOADS_ARCH = {
+            "1": [],
+            "5": [],
+            "15": [],
+            "30": [],
+            "60": []
+        }
 
-    if TOTAL_NETWORK_TRANSFER['download'] > 1024:
-        TOTAL_NETWORK_TRANSFER['download'] = TOTAL_NETWORK_TRANSFER['download'] // 1024
-        TOTAL_NETWORK_TRANSFER['download_unit'] = 'KB'
-    if TOTAL_NETWORK_TRANSFER['download'] > 1024:
-        TOTAL_NETWORK_TRANSFER['download'] = TOTAL_NETWORK_TRANSFER['download'] // 1024
-        TOTAL_NETWORK_TRANSFER['download_unit'] = 'MB'
-    if TOTAL_NETWORK_TRANSFER['download'] > 1024:
-        TOTAL_NETWORK_TRANSFER['download'] = TOTAL_NETWORK_TRANSFER['download'] // 1024
-        TOTAL_NETWORK_TRANSFER['download_unit'] = 'GB'
+        self.PROGRAM_START_TIME = time.time()
 
-    if TOTAL_NETWORK_TRANSFER['upload'] > 1024:
-        TOTAL_NETWORK_TRANSFER['upload'] = TOTAL_NETWORK_TRANSFER['upload'] // 1024
-        TOTAL_NETWORK_TRANSFER['upload_unit'] = 'KB'
-    if TOTAL_NETWORK_TRANSFER['upload'] > 1024:
-        TOTAL_NETWORK_TRANSFER['upload'] = TOTAL_NETWORK_TRANSFER['upload'] // 1024
-        TOTAL_NETWORK_TRANSFER['upload_unit'] = 'MB'
-    if TOTAL_NETWORK_TRANSFER['upload'] > 1024:
-        TOTAL_NETWORK_TRANSFER['upload'] = TOTAL_NETWORK_TRANSFER['upload'] // 1024
-        TOTAL_NETWORK_TRANSFER['upload_unit'] = 'GB'
+        self.LAST_PERIOD_1 = self.PROGRAM_START_TIME + 60
+        self.LAST_PERIOD_5 = self.PROGRAM_START_TIME + 5 * 60
+        self.LAST_PERIOD_15 = self.PROGRAM_START_TIME + 15 * 60
+        self.LAST_PERIOD_30 = self.PROGRAM_START_TIME + 30 * 60
+        self.LAST_PERIOD_60 = self.PROGRAM_START_TIME + 60 * 60
 
-    stats = {
-        "total_upload_kBps": total_upload_kBps,
-        "total_download_kBps": total_download_kBps,
-        "total_upload_kbps": total_upload_kBps*8,
-        "total_download_kbps": total_download_kBps*8,
-        "per_nic": stats
-    }
-    return stats
+        self.MAX_CPU_LOAD_PERC = 0
+        self.MAX_CPU_LOAD_TIME = ""
 
-def getCpuAvg(cpuloads, cpu_count):
-    if len(cpuloads) == 0:
-        return 0
-    avg = sum(cpuloads)/len(cpuloads)
-    return round(avg)
-def analyze():
-    global LAST_PERIOD_1, LAST_PERIOD_5, LAST_PERIOD_15, LAST_PERIOD_30, LAST_PERIOD_60
-    global CPU_LOADS_ARCH, MAX_CPU_LOAD_PERC, MAX_CPU_LOAD_TIME
+        self.MAX_NET_DOWNLOAD = 0
+        self.MAX_NET_DOWNLOAD_TIME = ""
+        self.MAX_NET_UPLOAD = 0
+        self.MAX_NET_UPLOAD_TIME = ""
 
-    time_now = time.time()
-    metrics = get_system_metrics()
+        self.DISK_USAGE_PATHS = ["C:\\"]
 
-    cpu_count = metrics['cpu_count']
-    cpu_load = metrics['cpu_load']
+        self.API_ENDPOINT = ""
+        self.API_TOKEN_NAME = ""
+        self.API_TOKEN_VALUE = ""
+        self.REPORT_FREQUENCY = 99
 
-    if cpu_load >= MAX_CPU_LOAD_PERC:
+        self.LAST_REPORT_SEND = 0
+
+        self.RUN_CHECK_EVERY_SECONDS = 30
+
+        self.NET_IO_START = dict()
+        self.NET_IO_END = dict()
+        self.TOTAL_NETWORK_TRANSFER = {
+            "download": 0,
+            "upload": 0,
+            "download_unit": "B",
+            "upload_unit": "B"
+        }
+
+        self.PRINT_TO_CONSOLE = True
+        self.PRINT_REPORT_TIMESTAMPS = True
+
+    def load_config(self):
+        with open("config.json", "r") as file:
+            config = jsload(file)
+            self.API_ENDPOINT = config['api_endpoint']
+            self.API_TOKEN_NAME = config['api_token_name']
+            self.API_TOKEN_VALUE = config['api_token_value']
+            self.REPORT_FREQUENCY = config['send_report_every_mins']
+            self.DISK_USAGE_PATHS = config['disk_usage_paths']
+            self.RUN_CHECK_EVERY_SECONDS = config['run_check_every_seconds']
+            self.PRINT_TO_CONSOLE = config['print_to_console']
+            self.PRINT_REPORT_TIMESTAMPS = config['print_report_timestamps']
+
+        print("\t\t Run analyze every {} second(s)" . format(self.RUN_CHECK_EVERY_SECONDS))
+        print("\t\t Output to console is set to: ", self.PRINT_TO_CONSOLE)
+        print("\t\t Report to {} every {} minute(s) " . format(self.API_ENDPOINT, self.REPORT_FREQUENCY))
+
+    def getHardwareInfo(self):
+        cpu = platform.processor()
+        system = platform.system()
+
+        return {
+            "cpu": cpu,
+            "system": system
+        }
+
+    def getCpuAvg(self, cpuloads):
+        if len(cpuloads) == 0:
+            return 0
+        avg = sum(cpuloads) / len(cpuloads)
+        return round(avg)
+
+    def get_network_speed(self):
+        nics = [nic for nic in self.NET_IO_START.keys()]
+
+        stats = dict()
+        total_upload_kBps = 0
+        total_download_kBps = 0
+
+        for nic in nics:
+            s, e = self.NET_IO_START[nic], self.NET_IO_END[nic]
+            upload_speed = abs(e.bytes_sent - s.bytes_sent) / self.RUN_CHECK_EVERY_SECONDS
+            download_speed = abs(e.bytes_recv - s.bytes_recv) / self.RUN_CHECK_EVERY_SECONDS
+            upload_speed_kBps = upload_speed // 1024
+            download_speed_kBps = download_speed // 1024
+            total_upload_kBps += upload_speed_kBps
+            total_download_kBps += download_speed_kBps
+            stats[nic] = {
+                "upload_speed_kBps": upload_speed_kBps,
+                "download_speed_kBps": download_speed_kBps
+            }
+
+            self.TOTAL_NETWORK_TRANSFER['download'] += s.bytes_recv
+            self.TOTAL_NETWORK_TRANSFER['upload'] += s.bytes_sent
+
+        if self.TOTAL_NETWORK_TRANSFER['download'] > 1024:
+            self.TOTAL_NETWORK_TRANSFER['download'] = self.TOTAL_NETWORK_TRANSFER['download'] // 1024
+            self.TOTAL_NETWORK_TRANSFER['download_unit'] = 'KB'
+        if self.TOTAL_NETWORK_TRANSFER['download'] > 1024:
+            self.TOTAL_NETWORK_TRANSFER['download'] = self.TOTAL_NETWORK_TRANSFER['download'] // 1024
+            self.TOTAL_NETWORK_TRANSFER['download_unit'] = 'MB'
+        if self.TOTAL_NETWORK_TRANSFER['download'] > 1024:
+            self.TOTAL_NETWORK_TRANSFER['download'] = self.TOTAL_NETWORK_TRANSFER['download'] // 1024
+            self.TOTAL_NETWORK_TRANSFER['download_unit'] = 'GB'
+
+        if self.TOTAL_NETWORK_TRANSFER['upload'] > 1024:
+            self.TOTAL_NETWORK_TRANSFER['upload'] = self.TOTAL_NETWORK_TRANSFER['upload'] // 1024
+            self.TOTAL_NETWORK_TRANSFER['upload_unit'] = 'KB'
+        if self.TOTAL_NETWORK_TRANSFER['upload'] > 1024:
+            self.TOTAL_NETWORK_TRANSFER['upload'] = self.TOTAL_NETWORK_TRANSFER['upload'] // 1024
+            self.TOTAL_NETWORK_TRANSFER['upload_unit'] = 'MB'
+        if self.TOTAL_NETWORK_TRANSFER['upload'] > 1024:
+            self.TOTAL_NETWORK_TRANSFER['upload'] = self.TOTAL_NETWORK_TRANSFER['upload'] // 1024
+            self.TOTAL_NETWORK_TRANSFER['upload_unit'] = 'GB'
+
         current_datetime = datetime.now()
-        MAX_CPU_LOAD_PERC = cpu_load
-        MAX_CPU_LOAD_TIME = current_datetime.strftime("%Y-%m-%d %H:%M:%S")
+        if total_download_kBps*8 > self.MAX_NET_DOWNLOAD:
+            self.MAX_NET_DOWNLOAD = total_download_kBps*8
+            self.MAX_NET_DOWNLOAD_TIME = current_datetime.strftime("%Y-%m-%d %H:%M:%S")
 
-    if time_now > LAST_PERIOD_1:
-        LAST_PERIOD_1 = time_now + 60
-        AVG_CPU_LOAD["1"] = getCpuAvg(CPU_LOADS_ARCH["1"], cpu_count)
-        CPU_LOADS_ARCH["1"] = []
+        if total_upload_kBps*8 > self.MAX_NET_UPLOAD:
+            self.MAX_NET_UPLOAD = total_upload_kBps*8
+            self.MAX_NET_UPLOAD_TIME = current_datetime.strftime("%Y-%m-%d %H:%M:%S")
 
-    if time_now > LAST_PERIOD_5:
-        LAST_PERIOD_5 = time_now + 5*60
-        AVG_CPU_LOAD["5"] = getCpuAvg(CPU_LOADS_ARCH["5"], cpu_count)
-        CPU_LOADS_ARCH["5"] = []
+        stats = {
+            "total_upload_kBps": total_upload_kBps,
+            "total_download_kBps": total_download_kBps,
+            "total_upload_kbps": total_upload_kBps * 8,
+            "total_download_kbps": total_download_kBps * 8,
+            "per_nic": stats
+        }
+        return stats
 
-    if time_now > LAST_PERIOD_15:
-        LAST_PERIOD_15 = time_now + 15*60
-        AVG_CPU_LOAD["15"] = getCpuAvg(CPU_LOADS_ARCH["15"], cpu_count)
-        CPU_LOADS_ARCH["15"] = []
+    def get_system_metrics(self):
+        # CPU load
+        cpu_load = psutil.cpu_percent(interval=1)
+        cpu_count = psutil.cpu_count()
 
-    if time_now > LAST_PERIOD_30:
-        LAST_PERIOD_30 = time_now + 30*60
-        AVG_CPU_LOAD["30"] = getCpuAvg(CPU_LOADS_ARCH["30"], cpu_count)
-        CPU_LOADS_ARCH["30"] = []
+        # Memory load
+        memory_info = psutil.virtual_memory()
+        memory_load = memory_info.percent
 
-    if time_now > LAST_PERIOD_60:
-        LAST_PERIOD_60 = time_now + 60*60
-        AVG_CPU_LOAD["60"] = getCpuAvg(CPU_LOADS_ARCH["60"], cpu_count)
-        CPU_LOADS_ARCH["60"] = []
+        # CPU temperature (Linux, needs 'sensors' module; may not work on all systems)
+        if hasattr(psutil, "sensors_temperatures"):
+            cpu_temp_info = psutil.sensors_temperatures().get("coretemp", [])
+            cpu_temp = cpu_temp_info[0].current if cpu_temp_info else None
+        else:
+            cpu_temp = None
 
-    CPU_LOADS_ARCH["1"].append(cpu_load)
-    CPU_LOADS_ARCH["5"].append(cpu_load)
-    CPU_LOADS_ARCH["15"].append(cpu_load)
-    CPU_LOADS_ARCH["30"].append(cpu_load)
-    CPU_LOADS_ARCH["60"].append(cpu_load)
+        if hasattr(psutil, "sensors_fans"):
+            fans_info = psutil.sensors_fans()
+        else:
+            fans_info = None
 
-def reportStatistic():
-    global LAST_REPORT_SEND, API_ENDPOINT, REPORT_FREQUENCY
-    time_now = time.time()
+        # GPU load (using GPUtil)
+        gpu_info = GPUtil.getGPUs()
+        gpu_load = gpu_info[0].load * 100 if gpu_info else None
 
-    if time_now < LAST_REPORT_SEND:
-        return
+        # disk load
+        disk_usages = {path: psutil.disk_usage(path) for path in self.DISK_USAGE_PATHS}
+        disk_usages = {path: {"free_gb": round(du.free/1024**3), "free_perc": round(du.percent)} for path, du in disk_usages.items()}
 
-    LAST_REPORT_SEND = time_now + REPORT_FREQUENCY * 60
+        disk_total_free_gb = sum(d['free_gb'] for d in disk_usages.values())
 
-    metrics = get_system_metrics()
-    hwinfo = getHardwareInfo()
+        network = self.get_network_speed()
 
-    current_datetime = datetime.now()
+        return {
+            "cpu_count": cpu_count,
+            "cpu_load": cpu_load,
+            "memory_load": memory_load,
+            "cpu_temperature": cpu_temp,
+            "cpu_temp_alt": WinTmp.CPU_Temp(),
+            "gpu_temp": WinTmp.GPU_Temp(),
+            "gpu_load": gpu_load,
+            "disk_usages": disk_usages,
+            "disk_total_free_gb": disk_total_free_gb,
+            "network": network,
+            "fans_info": fans_info
+        }
 
-    report = {
-        API_TOKEN_NAME: API_TOKEN_VALUE,
-        "last_update": current_datetime.strftime("%Y-%m-%d %H:%M:%S"),
-        "system": {
-            "cpu_count": metrics['cpu_count'],
-            "system_info": hwinfo['system'],
-            "cpu": hwinfo['cpu']
-        },
-        "current": {
-            "cpu_load": metrics['cpu_load'],
-            "gpu_load": metrics['gpu_load'],
-            "memory_load": metrics['memory_load'],
-            "cpu_temp": metrics['cpu_temperature'],
-            "cpu_temp_alt": metrics['cpu_temp_alt'],
-            "gpu_temp": metrics['gpu_temp'],
-            "disks": dict(),
-            "network": metrics['network']
-        },
-        "history": {
-            "cpu_load_avg": AVG_CPU_LOAD,
-            "last_max_cpu_load": {
-                "load": MAX_CPU_LOAD_PERC,
-                "time": MAX_CPU_LOAD_TIME
+    def analyze(self):
+        time_now = time.time()
+        metrics = self.get_system_metrics()
+
+        cpu_count = metrics['cpu_count']
+        cpu_load = metrics['cpu_load']
+
+        if cpu_load >= self.MAX_CPU_LOAD_PERC:
+            current_datetime = datetime.now()
+            self.MAX_CPU_LOAD_PERC = cpu_load
+            self.MAX_CPU_LOAD_TIME = current_datetime.strftime("%Y-%m-%d %H:%M:%S")
+
+        if time_now > self.LAST_PERIOD_1:
+            self.LAST_PERIOD_1 = time_now + 60
+            self.AVG_CPU_LOAD["1"] = self.getCpuAvg(self.CPU_LOADS_ARCH["1"])
+            self.CPU_LOADS_ARCH["1"] = []
+
+        if time_now > self.LAST_PERIOD_5:
+            self.LAST_PERIOD_5 = time_now + 5*60
+            self.AVG_CPU_LOAD["5"] = self.getCpuAvg(self.CPU_LOADS_ARCH["5"])
+            self.CPU_LOADS_ARCH["5"] = []
+
+        if time_now > self.LAST_PERIOD_15:
+            self.LAST_PERIOD_15 = time_now + 15*60
+            self.AVG_CPU_LOAD["15"] = self.getCpuAvg(self.CPU_LOADS_ARCH["15"])
+            self.CPU_LOADS_ARCH["15"] = []
+
+        if time_now > self.LAST_PERIOD_30:
+            self.LAST_PERIOD_30 = time_now + 30*60
+            self.AVG_CPU_LOAD["30"] = self.getCpuAvg(self.CPU_LOADS_ARCH["30"])
+            self.CPU_LOADS_ARCH["30"] = []
+
+        if time_now > self.LAST_PERIOD_60:
+            self.LAST_PERIOD_60 = time_now + 60*60
+            self.AVG_CPU_LOAD["60"] = self.getCpuAvg(self.CPU_LOADS_ARCH["60"])
+            self.CPU_LOADS_ARCH["60"] = []
+
+        self.CPU_LOADS_ARCH["1"].append(cpu_load)
+        self.CPU_LOADS_ARCH["5"].append(cpu_load)
+        self.CPU_LOADS_ARCH["15"].append(cpu_load)
+        self.CPU_LOADS_ARCH["30"].append(cpu_load)
+        self.CPU_LOADS_ARCH["60"].append(cpu_load)
+
+    def reportStatistic(self):
+        time_now = time.time()
+
+        if time_now < self.LAST_REPORT_SEND:
+            return
+
+        self.LAST_REPORT_SEND = time_now + self.REPORT_FREQUENCY * 60
+
+        metrics = self.get_system_metrics()
+        hwinfo = self.getHardwareInfo()
+
+        current_datetime = datetime.now()
+
+        runtime = round(time.time() - self.PROGRAM_START_TIME)
+        runtime_unit = "s"
+        if runtime > 60:
+            runtime = runtime // 60
+            runtime_unit = "min"
+
+        if runtime > 60:
+            runtime = runtime // 60
+            runtime_unit = "h"
+
+        if runtime > 24:
+            runtime = runtime // 24
+            runtime_unit = "d"
+
+        report = {
+            self.API_TOKEN_NAME: self.API_TOKEN_VALUE,
+            "version": self.version,
+            "last_update": current_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+            "report_runtime": "{} {}" . format(runtime, runtime_unit),
+            "system": {
+                "cpu_count": metrics['cpu_count'],
+                "system_info": hwinfo['system'],
+                "cpu": hwinfo['cpu']
             },
-            "network": {
-                "total_transfer": TOTAL_NETWORK_TRANSFER
+            "current": {
+                "cpu_load": metrics['cpu_load'],
+                "gpu_load": metrics['gpu_load'],
+                "memory_load": metrics['memory_load'],
+                "cpu_temp": metrics['cpu_temperature'],
+                "cpu_temp_alt": metrics['cpu_temp_alt'],
+                "gpu_temp": metrics['gpu_temp'],
+                "disks": {
+                    "total_free_gb": metrics['disk_total_free_gb'],
+                    "per_disk": dict()
+                },
+                "network": metrics['network'],
+                "fans_info": metrics['fans_info']
+            },
+            "history": {
+                "cpu_load_avg": self.AVG_CPU_LOAD,
+                "last_max_cpu_load": {
+                    "load": self.MAX_CPU_LOAD_PERC,
+                    "time": self.MAX_CPU_LOAD_TIME
+                },
+                "network": {
+                    "total_transfer": self.TOTAL_NETWORK_TRANSFER,
+                    "download_peak": {
+                        "rate_kbps": self.MAX_NET_DOWNLOAD,
+                        "time": self.MAX_NET_DOWNLOAD_TIME
+                    },
+                    "upload_peak": {
+                        "rate_kbps": self.MAX_NET_UPLOAD,
+                        "time": self.MAX_NET_UPLOAD_TIME
+                    }
+                }
             }
         }
-    }
 
-    for path, du in metrics['disk_usages'].items():
-        report['current']['disks'][path] = du
+        for path, du in metrics['disk_usages'].items():
+            report['current']['disks']['per_disk'][path] = du
 
-    response = requests.post(API_ENDPOINT, json=report)
-    if response.status_code != 200:
-        print("Response code not OK")
-    else:
-        if PRINT_REPORT_TIMESTAMPS:
-            print("Report sent at: {}" . format(current_datetime))
 
-def _print(arg, *args):
-    global PRINT_TO_CONSOLE
-    if PRINT_TO_CONSOLE:
-        print(arg, *args)
+        response = requests.post(self.API_ENDPOINT, json=report)
+        if response.status_code != 200:
+            print("Response code not OK")
+        else:
+            if self.PRINT_REPORT_TIMESTAMPS:
+                print("Report sent at: {}" . format(current_datetime))
+
+    def printStatistic(self):
+        metrics = self.get_system_metrics()
+        self._print("System Metrics:")
+        self._print(f"CPU Count: {metrics['cpu_count']} threads")
+        self._print(f"CPU Load: {metrics['cpu_load']}%")
+        self._print(f"Memory Load: {metrics['memory_load']}%")
+        self._print("\n")
+        self._print("Disks info:")
+        self._print("Total free space [GB] {} " . format(metrics['disk_total_free_gb']))
+        for path, du in metrics['disk_usages'].items():
+            self._print("{}: {}" . format(path, du))
+        self._print("\n")
+        self._print("Network speed: ")
+        self._print("\t Total download: ", metrics['network']['total_download_kBps'])
+        self._print("\t Total upload: ", metrics['network']['total_upload_kBps'])
+        self._print("\n")
+        self._print(f"CPU Temperature: {metrics['cpu_temperature']}°C" if metrics['cpu_temperature'] else "N/A")
+        self._print(f"GPU Load: {metrics['gpu_load']}%" if metrics['gpu_load'] else "N/A")
+        self._print("\n")
+        self._print("Last Max CPU LOAD [%]: ", self.MAX_CPU_LOAD_PERC)
+        self._print("Last Max CPU LOAD @: ", self.MAX_CPU_LOAD_TIME)
+        self._print("\n")
+        self._print("Average CPU Load: ")
+        for m, l in self.AVG_CPU_LOAD.items():
+            self._print("\t Average CPU load in last {} minutes: {}%" . format(m, l))
+
+        self._print("\n")
+        self._print("Fans info: ", metrics['fans_info'])
+        self._print("-----" * 20)
+
+    def run(self):
+        self.about()
+        print()
+        print("\t Loading config....")
+        self.load_config()
+        print("\t Config is loaded...")
+
+        print()
+        hwinfo = self.getHardwareInfo()
+        print("\t CPU: ", hwinfo['cpu'])
+        print("\t System: ", hwinfo['system'])
+
+        last_check = 0
+        while True:
+            time_now = time.time()
+            self.NET_IO_END = psutil.net_io_counters(pernic=True)
+            # run analyze every RUN_CHECK_EVERY_SECONDS seconds
+            if time_now > last_check:
+                self.printStatistic()
+                self.analyze()
+                last_check = time_now + self.RUN_CHECK_EVERY_SECONDS
+                self.reportStatistic()
+                self.NET_IO_START = psutil.net_io_counters(pernic=True)
+
+            time.sleep(2)
+            # Check if 'Q' has been pressed to exit
+            if keyboard.is_pressed("q"):
+                print("Exiting monitoring...")
+                break
 
 if __name__ == "__main__":
-    print("\n\n")
-    print("\t Hardware monitoring and reporting system by Sandi")
-    print("\t Version: 1.0")
-    print("\n\n")
-    print("\t To exit the program, hold 'Q', or you know... the good old CTRL+C")
-    print("\n")
-
-    print("\t Loading config....")
-    load_config()
-    print("\t Config is loaded...")
-    print("\n")
-    print("Run analyze every {} second(s)" . format(RUN_CHECK_EVERY_SECONDS))
-    print("Output to console is set to: ", PRINT_TO_CONSOLE)
-    print("\n")
-    hwinfo = getHardwareInfo()
-    print("CPU: ", hwinfo['cpu'])
-    print("System: ", hwinfo['system'])
-
-    last_check = 0
-    while True:
-        time_now = time.time()
-        NET_IO_END = psutil.net_io_counters(pernic=True)
-        # run analyze every RUN_CHECK_EVERY_SECONDS seconds
-        if time_now > last_check:
-            printStatistic()
-            analyze()
-            last_check = time_now + RUN_CHECK_EVERY_SECONDS
-            reportStatistic()
-            NET_IO_START = psutil.net_io_counters(pernic=True)
-
-        time.sleep(2)
-        # Check if 'Q' has been pressed to exit
-        if keyboard.is_pressed("q"):
-            print("Exiting monitoring...")
-            break
-
+    hwrp = HwInfoReport()
+    hwrp.run()
