@@ -299,6 +299,7 @@ class HwInfoReport:
             self.API_TOKEN_NAME: self.API_TOKEN_VALUE,
             "version": self.version,
             "last_update": current_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+            "last_update_seconds": time.time(),
             "report_runtime": "{} {}" . format(runtime, runtime_unit),
             "system": {
                 "cpu_count": metrics['cpu_count'],

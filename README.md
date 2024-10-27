@@ -27,6 +27,7 @@ Report sample:
     "token": "hiddenSomething",
     "version": "1.2",
     "last_update": "2024-10-27 22:10:51",
+    "last_update_seconds": 1730064734.2458124,
     "report_runtime": "4 min",
     "system": {
         "cpu_count": 16,
