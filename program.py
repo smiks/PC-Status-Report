@@ -285,7 +285,7 @@ class HwInfoReport:
             runtime = runtime // 60
             runtime_unit = "h"
 
-        if runtime > 24:
+        if runtime > 24 and runtime_unit == 'h':
             runtime = runtime // 24
             runtime_unit = "d"
 
