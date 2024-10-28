@@ -23,7 +23,7 @@ class HwInfoReport:
             print(arg, *args)
 
     def __init__(self):
-        self.version = "1.4"
+        self.version = "1.5"
         self.AVG_CPU_LOAD = {
             "1": 0,
             "5": 0,
@@ -228,7 +228,7 @@ class HwInfoReport:
         }
 
         # find most intense processes
-        processes = []
+        processes = dict()
         for proc in psutil.process_iter(['pid', 'name', 'username']):
             username = proc.info['username']
             name = proc.info['name']
@@ -239,7 +239,11 @@ class HwInfoReport:
 
             p = psutil.Process(pid=pid)
             with p.oneshot():
-                processes.append((name, p.cpu_percent(),  p.memory_info().rss))
+                if name not in processes:
+                    processes[name] = {"cpu": 0, "ram": 0, "name": name}
+                processes[name]['cpu'] += p.cpu_percent() * cpu_count
+                processes[name]['ram'] += p.memory_info().pagefile
+
 
         return {
             "cpu_count": cpu_count,
