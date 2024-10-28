@@ -1,4 +1,4 @@
-# PC-Status-Report v1.3
+# PC-Status-Report v1.4
 
 A simple Python program that gathers your system's info and sends it to the endpoint you define in config.json.
 It can be used as a remote monitoring of your PC.
@@ -25,20 +25,25 @@ Report sample:
 ```
 {
     "token": "hiddenSomething",
-    "version": "1.3",
-    "last_update": "2024-10-28 14:11:48",
-    "last_update_seconds": 1730121108.5149655,
-    "start_time": 1730121029.9025655,
-    "report_runtime": "1 min",
+    "version": "1.4",
+    "last_update": "2024-10-28 17:47:18",
+    "last_update_seconds": 1730134038.587204,
+    "start_time": 1730134031.564783,
+    "report_runtime": "7 s",
     "system": {
-        "cpu_count": 12,
+        "cpu_count": 16,
         "system_info": "Windows",
-        "cpu": "Intel64 Family 6 Model 186 Stepping 3, GenuineIntel"
+        "cpu": "Intel64 Family 6 Model 158 Stepping 13, GenuineIntel",
+        "boot_time": 1728224602.587204
     },
     "current": {
         "cpu_load": 3.1,
         "gpu_load": 0,
         "memory_load": 84.6,
+        "virtual_memory": {
+            "available": 35596468224,
+            "percent": 48.1
+        },
         "cpu_temp": null,
         "cpu_temp_alt": 79,
         "cpu_temps": [
@@ -66,13 +71,10 @@ Report sample:
             60,
             58.70000076293945
         ],
-        "cpu_clocks": [
-            [
-                1700,
-                0,
-                1700
-            ]
-        ],
+        "cpu_clocks": {
+            "current": 3600,
+            "max": 3600
+        },
         "gpu_temp": 60,
         "all_temps": {
             "Cpu_Temperature": [
@@ -170,7 +172,14 @@ Report sample:
                 }
             }
         },
-        "fans_info": null
+        "fans_info": null,
+        "processes": [
+            [
+                "process.exe",
+                [cpu load] %,
+                [ram load] B
+            ]...
+        ]
     },
     "history": {
         "cpu_load_avg": {
@@ -180,6 +189,13 @@ Report sample:
             "30": 0,
             "60": 0
         },
+        "cpu_load_max": {
+            "1": 0,
+            "5": 0,
+            "15": 0,
+            "30": 0,
+            "60": 0
+        },        
         "last_max_cpu_load": {
             "load": 5.6,
             "time": "2024-10-28 14:11:19"
@@ -200,8 +216,7 @@ Report sample:
                 "time": "2024-10-28 14:11:23"
             }
         }
-    },
-    "request_ip": "193.77.164.54"
+    }
 }
 ```
 

@@ -23,8 +23,16 @@ class HwInfoReport:
             print(arg, *args)
 
     def __init__(self):
-        self.version = "1.3"
+        self.version = "1.4"
         self.AVG_CPU_LOAD = {
+            "1": 0,
+            "5": 0,
+            "15": 0,
+            "30": 0,
+            "60": 0
+        }
+
+        self.MAX_CPU_LOAD = {
             "1": 0,
             "5": 0,
             "15": 0,
@@ -34,20 +42,14 @@ class HwInfoReport:
 
         # CPU LOAD ARCHIVE
         self.CPU_LOADS_ARCH = {
-            "1": [],
-            "5": [],
-            "15": [],
-            "30": [],
-            "60": []
+            "1": [0],
+            "5": [0],
+            "15": [0],
+            "30": [0],
+            "60": [0]
         }
 
         self.PROGRAM_START_TIME = time.time()
-
-        self.LAST_PERIOD_1 = self.PROGRAM_START_TIME + 60
-        self.LAST_PERIOD_5 = self.PROGRAM_START_TIME + 5 * 60
-        self.LAST_PERIOD_15 = self.PROGRAM_START_TIME + 15 * 60
-        self.LAST_PERIOD_30 = self.PROGRAM_START_TIME + 30 * 60
-        self.LAST_PERIOD_60 = self.PROGRAM_START_TIME + 60 * 60
 
         self.MAX_CPU_LOAD_PERC = 0
         self.MAX_CPU_LOAD_TIME = ""
@@ -212,17 +214,43 @@ class HwInfoReport:
         network = self.get_network_speed()
 
         cpu_temps = WinTmp.CPU_Temps() if WinTmp.CPU_Temps() else []
-        cpu_clocks = psutil.cpu_freq(True) if psutil.cpu_freq(True) else [["--", "--", "--"]]
         all_temps = WinTmp._all_temps() if WinTmp._all_temps() else []
+
+        cpu_clocks = psutil.cpu_freq()
+        if cpu_clocks:
+            cpu_clock_current = cpu_clocks.current
+            cpu_clock_max = cpu_clocks.max
+
+        vmem = psutil.virtual_memory()
+        virtual_memory = {
+            "available": vmem.available,
+            "percent": vmem.percent
+        }
+
+        # find most intense processes
+        processes = []
+        for proc in psutil.process_iter(['pid', 'name', 'username']):
+            username = proc.info['username']
+            name = proc.info['name']
+            pid = proc.info['pid']
+
+            if "NT AUTHORITY" in username:
+                continue
+
+            p = psutil.Process(pid=pid)
+            with p.oneshot():
+                processes.append((name, p.cpu_percent(),  p.memory_info().rss))
 
         return {
             "cpu_count": cpu_count,
             "cpu_load": round(cpu_load, 2),
             "memory_load": round(memory_load, 2),
+            "virtual_memory": virtual_memory,
             "cpu_temperature": cpu_temp,
             "cpu_temp_alt": WinTmp.CPU_Temp(),
             "cpu_temps": cpu_temps,
-            "cpu_clocks": psutil.cpu_freq(True),
+            "cpu_clocks": { "current": cpu_clock_current, "max": cpu_clock_max },
+            "processes": processes,
             "gpu_temp": WinTmp.GPU_Temp(),
             "gpu_load": round(gpu_load, 2),
             "disk_usages": disk_usages,
@@ -244,30 +272,31 @@ class HwInfoReport:
             self.MAX_CPU_LOAD_PERC = cpu_load
             self.MAX_CPU_LOAD_TIME = current_datetime.strftime("%Y-%m-%d %H:%M:%S")
 
-        if time_now > self.LAST_PERIOD_1:
-            self.LAST_PERIOD_1 = time_now + 60
-            self.AVG_CPU_LOAD["1"] = self.getCpuAvg(self.CPU_LOADS_ARCH["1"])
-            self.CPU_LOADS_ARCH["1"] = []
 
-        if time_now > self.LAST_PERIOD_5:
-            self.LAST_PERIOD_5 = time_now + 5*60
-            self.AVG_CPU_LOAD["5"] = self.getCpuAvg(self.CPU_LOADS_ARCH["5"])
-            self.CPU_LOADS_ARCH["5"] = []
+        parts = 60 // self.RUN_CHECK_EVERY_SECONDS
+        self.AVG_CPU_LOAD["1"] = self.getCpuAvg(self.CPU_LOADS_ARCH["1"])
+        self.MAX_CPU_LOAD["1"] = max(self.CPU_LOADS_ARCH["1"])
+        self.CPU_LOADS_ARCH["1"] = self.CPU_LOADS_ARCH["1"][-parts:]
 
-        if time_now > self.LAST_PERIOD_15:
-            self.LAST_PERIOD_15 = time_now + 15*60
-            self.AVG_CPU_LOAD["15"] = self.getCpuAvg(self.CPU_LOADS_ARCH["15"])
-            self.CPU_LOADS_ARCH["15"] = []
+        parts = (5*60) // self.RUN_CHECK_EVERY_SECONDS
+        self.AVG_CPU_LOAD["5"] = self.getCpuAvg(self.CPU_LOADS_ARCH["5"])
+        self.MAX_CPU_LOAD["5"] = max(self.CPU_LOADS_ARCH["5"])
+        self.CPU_LOADS_ARCH["5"] = self.CPU_LOADS_ARCH["5"][-parts:]
 
-        if time_now > self.LAST_PERIOD_30:
-            self.LAST_PERIOD_30 = time_now + 30*60
-            self.AVG_CPU_LOAD["30"] = self.getCpuAvg(self.CPU_LOADS_ARCH["30"])
-            self.CPU_LOADS_ARCH["30"] = []
+        parts = (15 * 60) // self.RUN_CHECK_EVERY_SECONDS
+        self.AVG_CPU_LOAD["15"] = self.getCpuAvg(self.CPU_LOADS_ARCH["15"])
+        self.MAX_CPU_LOAD["15"] = max(self.CPU_LOADS_ARCH["15"])
+        self.CPU_LOADS_ARCH["15"] = self.CPU_LOADS_ARCH["15"][-parts:]
 
-        if time_now > self.LAST_PERIOD_60:
-            self.LAST_PERIOD_60 = time_now + 60*60
-            self.AVG_CPU_LOAD["60"] = self.getCpuAvg(self.CPU_LOADS_ARCH["60"])
-            self.CPU_LOADS_ARCH["60"] = []
+        parts = (30 * 60) // self.RUN_CHECK_EVERY_SECONDS
+        self.AVG_CPU_LOAD["30"] = self.getCpuAvg(self.CPU_LOADS_ARCH["30"])
+        self.MAX_CPU_LOAD["30"] = max(self.CPU_LOADS_ARCH["30"])
+        self.CPU_LOADS_ARCH["30"] = self.CPU_LOADS_ARCH["30"][-parts:]
+
+        parts = (60 * 60) // self.RUN_CHECK_EVERY_SECONDS
+        self.AVG_CPU_LOAD["60"] = self.getCpuAvg(self.CPU_LOADS_ARCH["60"])
+        self.MAX_CPU_LOAD["60"] = max(self.CPU_LOADS_ARCH["60"])
+        self.CPU_LOADS_ARCH["60"] = self.CPU_LOADS_ARCH["60"][-parts:]
 
         self.CPU_LOADS_ARCH["1"].append(cpu_load)
         self.CPU_LOADS_ARCH["5"].append(cpu_load)
@@ -312,12 +341,14 @@ class HwInfoReport:
             "system": {
                 "cpu_count": metrics['cpu_count'],
                 "system_info": hwinfo['system'],
-                "cpu": hwinfo['cpu']
+                "cpu": hwinfo['cpu'],
+                "boot_time": psutil.boot_time()
             },
             "current": {
                 "cpu_load": metrics['cpu_load'],
                 "gpu_load": metrics['gpu_load'],
                 "memory_load": metrics['memory_load'],
+                "virtual_memory": metrics['virtual_memory'],
                 "cpu_temp": metrics['cpu_temperature'],
                 "cpu_temp_alt": metrics['cpu_temp_alt'],
                 "cpu_temps": metrics['cpu_temps'],
@@ -329,10 +360,12 @@ class HwInfoReport:
                     "per_disk": dict()
                 },
                 "network": metrics['network'],
-                "fans_info": metrics['fans_info']
+                "fans_info": metrics['fans_info'],
+                "processes": metrics['processes']
             },
             "history": {
                 "cpu_load_avg": self.AVG_CPU_LOAD,
+                "cpu_load_max": self.MAX_CPU_LOAD,
                 "last_max_cpu_load": {
                     "load": self.MAX_CPU_LOAD_PERC,
                     "time": self.MAX_CPU_LOAD_TIME
