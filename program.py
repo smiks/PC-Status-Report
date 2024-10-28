@@ -23,7 +23,7 @@ class HwInfoReport:
             print(arg, *args)
 
     def __init__(self):
-        self.version = "1.2"
+        self.version = "1.3"
         self.AVG_CPU_LOAD = {
             "1": 0,
             "5": 0,
@@ -211,18 +211,25 @@ class HwInfoReport:
 
         network = self.get_network_speed()
 
+        cpu_temps = WinTmp.CPU_Temps() if WinTmp.CPU_Temps() else []
+        cpu_clocks = psutil.cpu_freq(True) if psutil.cpu_freq(True) else [["--", "--", "--"]]
+        all_temps = WinTmp._all_temps() if WinTmp._all_temps() else []
+
         return {
             "cpu_count": cpu_count,
             "cpu_load": round(cpu_load, 2),
             "memory_load": round(memory_load, 2),
             "cpu_temperature": cpu_temp,
             "cpu_temp_alt": WinTmp.CPU_Temp(),
+            "cpu_temps": cpu_temps,
+            "cpu_clocks": psutil.cpu_freq(True),
             "gpu_temp": WinTmp.GPU_Temp(),
             "gpu_load": round(gpu_load, 2),
             "disk_usages": disk_usages,
             "disk_total_free_gb": disk_total_free_gb,
             "network": network,
-            "fans_info": fans_info
+            "fans_info": fans_info,
+            "all_temps": all_temps
         }
 
     def analyze(self):
@@ -300,6 +307,7 @@ class HwInfoReport:
             "version": self.version,
             "last_update": current_datetime.strftime("%Y-%m-%d %H:%M:%S"),
             "last_update_seconds": time.time(),
+            "start_time": self.PROGRAM_START_TIME,
             "report_runtime": "{} {}" . format(runtime, runtime_unit),
             "system": {
                 "cpu_count": metrics['cpu_count'],
@@ -312,7 +320,10 @@ class HwInfoReport:
                 "memory_load": metrics['memory_load'],
                 "cpu_temp": metrics['cpu_temperature'],
                 "cpu_temp_alt": metrics['cpu_temp_alt'],
+                "cpu_temps": metrics['cpu_temps'],
+                "cpu_clocks": metrics['cpu_clocks'],
                 "gpu_temp": metrics['gpu_temp'],
+                "all_temps": metrics['all_temps'],
                 "disks": {
                     "total_free_gb": metrics['disk_total_free_gb'],
                     "per_disk": dict()
@@ -382,6 +393,7 @@ class HwInfoReport:
         self._print("-----" * 20)
 
     def run(self):
+        sleepTime = 2  # seconds
         self.about()
         print()
         print("\t Loading config....")
@@ -401,11 +413,11 @@ class HwInfoReport:
             if time_now > last_check:
                 self.printStatistic()
                 self.analyze()
-                last_check = time_now + self.RUN_CHECK_EVERY_SECONDS
+                last_check = time_now + self.RUN_CHECK_EVERY_SECONDS - sleepTime
                 self.reportStatistic()
                 self.NET_IO_START = psutil.net_io_counters(pernic=True)
 
-            time.sleep(2)
+            time.sleep(sleepTime)
             # Check if 'Q' has been pressed to exit
             if keyboard.is_pressed("q"):
                 print("Exiting monitoring...")

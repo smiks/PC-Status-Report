@@ -1,4 +1,4 @@
-# PC-Status-Report v1.2
+# PC-Status-Report v1.3
 
 A simple Python program that gathers your system's info and sends it to the endpoint you define in config.json.
 It can be used as a remote monitoring of your PC.
@@ -25,48 +25,114 @@ Report sample:
 ```
 {
     "token": "hiddenSomething",
-    "version": "1.2",
-    "last_update": "2024-10-27 22:10:51",
-    "last_update_seconds": 1730064734.2458124,
-    "report_runtime": "4 min",
+    "version": "1.3",
+    "last_update": "2024-10-28 14:11:48",
+    "last_update_seconds": 1730121108.5149655,
+    "start_time": 1730121029.9025655,
+    "report_runtime": "1 min",
     "system": {
-        "cpu_count": 16,
+        "cpu_count": 12,
         "system_info": "Windows",
-        "cpu": "Intel64 Family 6 Model 158 Stepping 13, GenuineIntel"
+        "cpu": "Intel64 Family 6 Model 186 Stepping 3, GenuineIntel"
     },
     "current": {
-        "cpu_load": 10,
-        "gpu_load": 1,
-        "memory_load": 47.1,
+        "cpu_load": 3.1,
+        "gpu_load": 0,
+        "memory_load": 84.6,
         "cpu_temp": null,
-        "cpu_temp_alt": null,
-        "gpu_temp": 49,
+        "cpu_temp_alt": 79,
+        "cpu_temps": [
+            55,
+            56,
+            59,
+            59,
+            59,
+            59,
+            60,
+            60,
+            60,
+            60,
+            60,
+            45,
+            44,
+            41,
+            41,
+            41,
+            41,
+            40,
+            40,
+            40,
+            40,
+            60,
+            58.70000076293945
+        ],
+        "cpu_clocks": [
+            [
+                1700,
+                0,
+                1700
+            ]
+        ],
+        "gpu_temp": 60,
+        "all_temps": {
+            "Cpu_Temperature": [
+                54,
+                57,
+                59,
+                59,
+                59,
+                59,
+                59,
+                59,
+                59,
+                59,
+                60,
+                46,
+                43,
+                41,
+                41,
+                41,
+                41,
+                41,
+                41,
+                41,
+                41,
+                59,
+                58.29999923706055
+            ],
+            "GpuNvidia_Temperature": [
+                60,
+                66.1875,
+                64
+            ],
+            "Storage_Temperature": [
+                38,
+                33,
+                41
+            ]
+        },
         "disks": {
-            "total_free_gb": 172,
+            "total_free_gb": 753,
             "per_disk": {
                 "C:\\": {
-                    "free_gb": 39,
-                    "free_perc": 92
-                },
-                "R:\\": {
-                    "free_gb": 133,
-                    "free_perc": 86
+                    "free_gb": 753,
+                    "free_perc": 21
                 }
             }
         },
         "network": {
-            "total_download_kBps": 104,
-            "total_upload_kBps": 6,
-            "total_download_kbps": 832,
-            "total_upload_kbps": 48,
+            "total_download_kBps": 1,
+            "total_upload_kBps": 1,
+            "total_download_kbps": 8,
+            "total_upload_kbps": 8,
             "download_usage_perc": 0,
             "upload_usage_perc": 0,
             "per_nic": {
-                "Ethernet": {
+                "Ethernet 3": {
                     "upload_speed_kBps": 0,
                     "download_speed_kBps": 0
                 },
-                "Ethernet 2": {
+                "vEthernet (WSL (Hyper-V firewall))": {
                     "upload_speed_kBps": 0,
                     "download_speed_kBps": 0
                 },
@@ -74,43 +140,31 @@ Report sample:
                     "upload_speed_kBps": 0,
                     "download_speed_kBps": 0
                 },
-                "Ethernet 3": {
-                    "upload_speed_kBps": 0,
-                    "download_speed_kBps": 0
-                },
-                "Ethernet 4": {
-                    "upload_speed_kBps": 0,
-                    "download_speed_kBps": 0
-                },
-                "OpenVPN Data Channel Offload for NordVPN": {
-                    "upload_speed_kBps": 0,
-                    "download_speed_kBps": 0
-                },
-                "Local Area Connection 2": {
-                    "upload_speed_kBps": 0,
-                    "download_speed_kBps": 0
-                },
                 "Local Area Connection* 1": {
                     "upload_speed_kBps": 0,
                     "download_speed_kBps": 0
                 },
-                "Local Area Connection* 10": {
+                "Local Area Connection* 2": {
                     "upload_speed_kBps": 0,
                     "download_speed_kBps": 0
                 },
-                "Wi-Fi": {
-                    "upload_speed_kBps": 6,
-                    "download_speed_kBps": 104
+                "WiFi": {
+                    "upload_speed_kBps": 1,
+                    "download_speed_kBps": 1
+                },
+                "Ethernet 2": {
+                    "upload_speed_kBps": 0,
+                    "download_speed_kBps": 0
                 },
                 "Bluetooth Network Connection": {
                     "upload_speed_kBps": 0,
                     "download_speed_kBps": 0
                 },
-                "Loopback Pseudo-Interface 1": {
+                "Ethernet": {
                     "upload_speed_kBps": 0,
                     "download_speed_kBps": 0
                 },
-                "vEthernet (WSLCore)": {
+                "Loopback Pseudo-Interface 1": {
                     "upload_speed_kBps": 0,
                     "download_speed_kBps": 0
                 }
@@ -120,33 +174,34 @@ Report sample:
     },
     "history": {
         "cpu_load_avg": {
-            "1": 9,
+            "1": 4,
             "5": 0,
             "15": 0,
             "30": 0,
             "60": 0
         },
         "last_max_cpu_load": {
-            "load": 20.7,
-            "time": "2024-10-27 22:10:50"
+            "load": 5.6,
+            "time": "2024-10-28 14:11:19"
         },
         "network": {
             "total_transfer": {
-                "download": 10,
-                "upload": 284,
+                "download": 24,
+                "upload": 4,
                 "download_unit": "GB",
-                "upload_unit": "MB"
+                "upload_unit": "GB"
             },
             "download_peak": {
-                "rate_kbps": 4872,
-                "time": "2024-10-27 22:06:58"
+                "rate_kbps": 16,
+                "time": "2024-10-28 14:11:23"
             },
             "upload_peak": {
-                "rate_kbps": 168,
-                "time": "2024-10-27 22:08:32"
+                "rate_kbps": 8,
+                "time": "2024-10-28 14:11:23"
             }
         }
-    }
+    },
+    "request_ip": "193.77.164.54"
 }
 ```
 
