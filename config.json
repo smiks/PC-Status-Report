@@ -1,12 +1,13 @@
 {
-  "api_endpoint": "http://endopoint.php",
+  "api_endpoint": "http://matic.secure-atom.com/reportApi.php",
   "api_token_name": "token",
   "api_token_value": "hiddenSomething",
   "send_report_every_mins": 1,
-  "run_check_every_seconds": 5,
+  "run_check_every_seconds": 10,
   "disk_usage_paths": ["C:\\", "R:\\"],
   "print_to_console": false,
-  "print_report_timestamps": false,
+  "print_report_timestamps": true,
   "max_net_downlink_kbps": 500000,
-  "max_net_uplink_kbps": 100000
+  "max_net_uplink_kbps": 100000,
+  "include_process_monitoring": false
 }

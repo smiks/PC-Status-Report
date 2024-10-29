@@ -23,7 +23,7 @@ class HwInfoReport:
             print(arg, *args)
 
     def __init__(self):
-        self.version = "1.5"
+        self.version = "1.6"
         self.AVG_CPU_LOAD = {
             "1": 0,
             "5": 0,
@@ -82,6 +82,8 @@ class HwInfoReport:
         self.PRINT_TO_CONSOLE = True
         self.PRINT_REPORT_TIMESTAMPS = True
 
+        self.INCLUDE_PROCESS_MONITORING = False
+
     def load_config(self):
         with open("config.json", "r") as file:
             config = jsload(file)
@@ -95,6 +97,7 @@ class HwInfoReport:
             self.PRINT_REPORT_TIMESTAMPS = config['print_report_timestamps']
             self.MAX_NET_DOWNLINK_KBPS = config['max_net_downlink_kbps']
             self.MAX_NET_UPLINK_KBPS = config['max_net_uplink_kbps']
+            self.INCLUDE_PROCESS_MONITORING = config['include_process_monitoring']
 
         print("\t\t Run analyze every {} second(s)" . format(self.RUN_CHECK_EVERY_SECONDS))
         print("\t\t Output to console is set to: ", self.PRINT_TO_CONSOLE)
@@ -183,7 +186,8 @@ class HwInfoReport:
     def get_system_metrics(self):
         # CPU load
         cpu_load = psutil.cpu_percent(interval=1)
-        cpu_count = psutil.cpu_count()
+        core_count = psutil.cpu_count(logical=False)
+        thread_count = psutil.cpu_count()
 
         # Memory load
         memory_info = psutil.virtual_memory()
@@ -229,27 +233,29 @@ class HwInfoReport:
 
         # find most intense processes
         processes = dict()
-        for proc in psutil.process_iter(['pid', 'name', 'username']):
-            username = proc.info['username']
-            name = proc.info['name']
-            pid = proc.info['pid']
+        if self.INCLUDE_PROCESS_MONITORING:
+            for proc in psutil.process_iter(['pid', 'name', 'username']):
+                username = proc.info['username']
+                name = proc.info['name']
+                pid = proc.info['pid']
 
-            if "NT AUTHORITY" in username:
-                continue
+                if "NT AUTHORITY" in username:
+                    continue
 
-            try:
-                p = psutil.Process(pid=pid)
-                with p.oneshot():
-                    if name not in processes:
-                        processes[name] = {"cpu": 0, "ram": 0, "name": name}
-                    processes[name]['cpu'] += p.cpu_percent() * cpu_count
-                    processes[name]['ram'] += p.memory_info().pagefile
-            except:
-                pass
+                try:
+                    p = psutil.Process(pid=pid)
+                    with p.oneshot():
+                        if name not in processes:
+                            processes[name] = {"cpu": 0, "ram": 0, "name": name}
+                        processes[name]['cpu'] += p.cpu_percent() * core_count
+                        processes[name]['ram'] += p.memory_info().pagefile
+                except:
+                    pass
 
 
         return {
-            "cpu_count": cpu_count,
+            "core_count": core_count,
+            "thread_count": thread_count,
             "cpu_load": round(cpu_load, 2),
             "memory_load": round(memory_load, 2),
             "virtual_memory": virtual_memory,
@@ -271,7 +277,7 @@ class HwInfoReport:
         time_now = time.time()
         metrics = self.get_system_metrics()
 
-        cpu_count = metrics['cpu_count']
+        core_count = metrics['core_count']
         cpu_load = metrics['cpu_load']
 
         if cpu_load >= self.MAX_CPU_LOAD_PERC:
@@ -346,7 +352,8 @@ class HwInfoReport:
             "start_time": self.PROGRAM_START_TIME,
             "report_runtime": "{} {}" . format(runtime, runtime_unit),
             "system": {
-                "cpu_count": metrics['cpu_count'],
+                "core_count": metrics['core_count'],
+                "thread_count": metrics['thread_count'],
                 "system_info": hwinfo['system'],
                 "cpu": hwinfo['cpu'],
                 "boot_time": psutil.boot_time()
@@ -408,7 +415,7 @@ class HwInfoReport:
     def printStatistic(self):
         metrics = self.get_system_metrics()
         self._print("System Metrics:")
-        self._print(f"CPU Count: {metrics['cpu_count']} threads")
+        self._print(f"CPU Count: {metrics['thread_count']} threads")
         self._print(f"CPU Load: {metrics['cpu_load']}%")
         self._print(f"Memory Load: {metrics['memory_load']}%")
         self._print("\n")
