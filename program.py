@@ -237,12 +237,15 @@ class HwInfoReport:
             if "NT AUTHORITY" in username:
                 continue
 
-            p = psutil.Process(pid=pid)
-            with p.oneshot():
-                if name not in processes:
-                    processes[name] = {"cpu": 0, "ram": 0, "name": name}
-                processes[name]['cpu'] += p.cpu_percent() * cpu_count
-                processes[name]['ram'] += p.memory_info().pagefile
+            try:
+                p = psutil.Process(pid=pid)
+                with p.oneshot():
+                    if name not in processes:
+                        processes[name] = {"cpu": 0, "ram": 0, "name": name}
+                    processes[name]['cpu'] += p.cpu_percent() * cpu_count
+                    processes[name]['ram'] += p.memory_info().pagefile
+            except:
+                pass
 
 
         return {
@@ -392,12 +395,15 @@ class HwInfoReport:
             report['current']['disks']['per_disk'][path] = du
 
 
-        response = requests.post(self.API_ENDPOINT, json=report)
-        if response.status_code != 200:
-            print("Response code not OK")
-        else:
-            if self.PRINT_REPORT_TIMESTAMPS:
-                print("Report sent at: {}" . format(current_datetime))
+        try:
+            response = requests.post(self.API_ENDPOINT, json=report)
+            if response.status_code != 200:
+                print("Response code not OK")
+            else:
+                if self.PRINT_REPORT_TIMESTAMPS:
+                    print("Report sent at: {}" . format(current_datetime))
+        except:
+            pass
 
     def printStatistic(self):
         metrics = self.get_system_metrics()
