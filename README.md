@@ -25,13 +25,14 @@ Report sample:
 ```
 {
     "token": "hiddenSomething",
-    "version": "1.5",
+    "version": "1.6",
     "last_update": "2024-10-28 17:47:18",
     "last_update_seconds": 1730134038.587204,
     "start_time": 1730134031.564783,
     "report_runtime": "7 s",
     "system": {
-        "cpu_count": 16,
+        "core_count": 8,
+        "thread_count": 16,
         "system_info": "Windows",
         "cpu": "Intel64 Family 6 Model 158 Stepping 13, GenuineIntel",
         "boot_time": 1728224602.587204
