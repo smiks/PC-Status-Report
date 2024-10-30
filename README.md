@@ -1,4 +1,4 @@
-# PC-Status-Report v1.5
+# PC-Status-Report v1.7
 
 A simple Python program that gathers your system's info and sends it to the endpoint you define in config.json.
 It can be used as a remote monitoring of your PC.
