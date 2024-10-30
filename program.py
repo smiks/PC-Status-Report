@@ -23,7 +23,7 @@ class HwInfoReport:
             print(arg, *args)
 
     def __init__(self):
-        self.version = "1.6"
+        self.version = "1.7"
         self.AVG_CPU_LOAD = {
             "1": 0,
             "5": 0,
@@ -64,6 +64,7 @@ class HwInfoReport:
         self.API_ENDPOINT = ""
         self.API_TOKEN_NAME = ""
         self.API_TOKEN_VALUE = ""
+        self.UNIQUE_ID = ""
         self.REPORT_FREQUENCY = 99
 
         self.LAST_REPORT_SEND = 0
@@ -72,6 +73,8 @@ class HwInfoReport:
 
         self.NET_IO_START = dict()
         self.NET_IO_END = dict()
+        self.MAX_NET_DOWNLINK_KBPS = 0
+        self.MAX_NET_UPLINK_KBPS = 0
         self.TOTAL_NETWORK_TRANSFER = {
             "download": 0,
             "upload": 0,
@@ -90,6 +93,7 @@ class HwInfoReport:
             self.API_ENDPOINT = config['api_endpoint']
             self.API_TOKEN_NAME = config['api_token_name']
             self.API_TOKEN_VALUE = config['api_token_value']
+            self.UNIQUE_ID = config['unique_id']
             self.REPORT_FREQUENCY = config['send_report_every_mins']
             self.DISK_USAGE_PATHS = config['disk_usage_paths']
             self.RUN_CHECK_EVERY_SECONDS = config['run_check_every_seconds']
@@ -356,7 +360,8 @@ class HwInfoReport:
                 "thread_count": metrics['thread_count'],
                 "system_info": hwinfo['system'],
                 "cpu": hwinfo['cpu'],
-                "boot_time": psutil.boot_time()
+                "boot_time": psutil.boot_time(),
+                "unique_id": self.UNIQUE_ID
             },
             "current": {
                 "cpu_load": metrics['cpu_load'],

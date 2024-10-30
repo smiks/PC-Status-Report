@@ -2,6 +2,7 @@
   "api_endpoint": "http://matic.secure-atom.com/reportApi.php",
   "api_token_name": "token",
   "api_token_value": "hiddenSomething",
+  "unique_id": "WorkPC",
   "send_report_every_mins": 1,
   "run_check_every_seconds": 10,
   "disk_usage_paths": ["C:\\", "R:\\"],

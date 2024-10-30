@@ -25,7 +25,7 @@ Report sample:
 ```
 {
     "token": "hiddenSomething",
-    "version": "1.6",
+    "version": "1.7",
     "last_update": "2024-10-28 17:47:18",
     "last_update_seconds": 1730134038.587204,
     "start_time": 1730134031.564783,
@@ -35,7 +35,8 @@ Report sample:
         "thread_count": 16,
         "system_info": "Windows",
         "cpu": "Intel64 Family 6 Model 158 Stepping 13, GenuineIntel",
-        "boot_time": 1728224602.587204
+        "boot_time": 1728224602.587204,
+        "unique_id": [your unique ID from config.json]
     },
     "current": {
         "cpu_load": 3.1,
