@@ -268,8 +268,8 @@ class HwInfoReport:
             "total_upload_kBps": total_upload_kBps,
             "total_download_kbps": download_kbps,
             "total_upload_kbps": upload_kbps,
-            "download_usage_perc": round(download_kbps / self.MAX_NET_DOWNLINK_KBPS, 2) if self.MAX_NET_DOWNLINK_KBPS > 0 else 0,
-            "upload_usage_perc": round(upload_kbps / self.MAX_NET_UPLINK_KBPS, 2) if self.MAX_NET_UPLINK_KBPS > 0 else 0,
+            "download_usage_perc": round((download_kbps / self.MAX_NET_DOWNLINK_KBPS)*100, 2) if self.MAX_NET_DOWNLINK_KBPS > 0 else 0,
+            "upload_usage_perc": round((upload_kbps / self.MAX_NET_UPLINK_KBPS)*100, 2) if self.MAX_NET_UPLINK_KBPS > 0 else 0,
             "per_nic": stats
         }
         return stats
