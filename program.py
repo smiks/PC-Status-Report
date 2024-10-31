@@ -439,13 +439,13 @@ class HwInfoReport:
         parts = (720 * 60) // self.RUN_CHECK_EVERY_SECONDS
         self.GPU_LOADS_ARCH["720"] = self.GPU_LOADS_ARCH["720"][-parts:]
 
-        self.GPU_LOADS_ARCH["1"].append(cpu_load)
-        self.GPU_LOADS_ARCH["5"].append(cpu_load)
-        self.GPU_LOADS_ARCH["15"].append(cpu_load)
-        self.GPU_LOADS_ARCH["30"].append(cpu_load)
-        self.GPU_LOADS_ARCH["60"].append(cpu_load)
-        self.GPU_LOADS_ARCH["360"].append(cpu_load)
-        self.GPU_LOADS_ARCH["720"].append(cpu_load)
+        self.GPU_LOADS_ARCH["1"].append(gpu_load)
+        self.GPU_LOADS_ARCH["5"].append(gpu_load)
+        self.GPU_LOADS_ARCH["15"].append(gpu_load)
+        self.GPU_LOADS_ARCH["30"].append(gpu_load)
+        self.GPU_LOADS_ARCH["60"].append(gpu_load)
+        self.GPU_LOADS_ARCH["360"].append(gpu_load)
+        self.GPU_LOADS_ARCH["720"].append(gpu_load)
 
     def reportStatistic(self):
         metrics = self.get_system_metrics()
