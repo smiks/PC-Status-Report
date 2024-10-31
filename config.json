@@ -1,11 +1,25 @@
 {
-  "api_endpoint": "http://matic.secure-atom.com/reportApi.php",
-  "api_token_name": "token",
-  "api_token_value": "hiddenSomething",
-  "unique_id": "WorkPC",
+  "api_endpoints": [
+    {
+      "url": "endpoint.reportApi.php",
+      "token_name": "token",
+      "token_value": "hiddenSomething"
+    }
+  ],
+  "remote_control_polling": [
+    {
+      "url": "endpoint.remoteControl.php",
+      "clear_queue_url": "endpoint.clearRemoteControl.php",
+      "token_name": "token",
+      "token_value": "hiddenSomething"
+    }
+  ],
+  "remote_control_poll_every_seconds": 60,
+  "remote_control_poll_commands": ["resetStatistics"],
+  "unique_id": "MyPC",
   "send_report_every_mins": 1,
   "run_check_every_seconds": 10,
-  "disk_usage_paths": ["C:\\", "R:\\"],
+  "disk_usage_paths": ["C:\\"],
   "print_to_console": false,
   "print_report_timestamps": true,
   "max_net_downlink_kbps": 500000,

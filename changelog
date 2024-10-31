@@ -1,0 +1,17 @@
+Version 2.0
+----------------------------
+New features:
+ - multiple API endpoints
+ - remote control polling
+     - command: clearStatistics
+ - reporting CPU/GPU history
+     - 60 minutes
+     - 6 hours
+     - 12 hours
+
+Improvements & changes:
+ - checking for report frequency optimization
+ - added cpu avg/max load archive for 6 and 12 hours mark
+ - removed max cpu clock (as it was always the same)
+ - improved stability
+ - various bugfixes

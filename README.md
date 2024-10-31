@@ -1,4 +1,4 @@
-# PC-Status-Report v1.7
+# PC-Status-Report v2.0
 
 A simple Python program that gathers your system's info and sends it to the endpoint you define in config.json.
 It can be used as a remote monitoring of your PC.
@@ -25,7 +25,7 @@ Report sample:
 ```
 {
     "token": "hiddenSomething",
-    "version": "1.7",
+    "version": "2.0",
     "last_update": "2024-10-28 17:47:18",
     "last_update_seconds": 1730134038.587204,
     "start_time": 1730134031.564783,
@@ -197,6 +197,16 @@ Report sample:
             "15": 0,
             "30": 0,
             "60": 0
+        },
+        "cpu_charts": {
+            "60": [loads in last 60 minutes],
+            "360": [loads in last 360 minutes],
+            "720": [loads in last 720 minutes]
+        },
+        "gpu_charts": {
+            "60": [loads in last 60 minutes],
+            "360": [loads in last 360 minutes],
+            "720": [loads in last 720 minutes]
         },        
         "last_max_cpu_load": {
             "load": 5.6,
