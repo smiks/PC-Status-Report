@@ -24,5 +24,8 @@
   "print_report_timestamps": true,
   "max_net_downlink_kbps": 500000,
   "max_net_uplink_kbps": 100000,
-  "include_process_monitoring": false
+  "include_process_monitoring": false,
+  "customFlags": {
+    "showServices": false
+  }
 }

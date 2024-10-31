@@ -24,7 +24,8 @@ Requirements:
 Report sample:
 ```
 {
-    "token": "hiddenSomething",
+    "token_name": "token_value",
+    "custom_flags": {...}
     "version": "2.0",
     "last_update": "2024-10-28 17:47:18",
     "last_update_seconds": 1730134038.587204,

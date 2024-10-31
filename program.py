@@ -111,6 +111,8 @@ class HwInfoReport:
 
         self.INCLUDE_PROCESS_MONITORING = False
 
+        self.CUSTOM_FLAGS = dict()
+
     def resetStatistics(self):
         self.AVG_CPU_LOAD = {
             "1": 0,
@@ -186,6 +188,7 @@ class HwInfoReport:
             self.REMOTE_CONTROL_POLLING = config['remote_control_polling']
             self.REMOTE_CONTROL_POLL_FREQUENCY = config['remote_control_poll_every_seconds']
             self.REMOTE_CONTROL_POLL_COMMANDS = config['remote_control_poll_commands']
+            self.CUSTOM_FLAGS = config['customFlags']
 
         print("\t\t Run analyze every {} second(s)" . format(self.RUN_CHECK_EVERY_SECONDS))
         print("\t\t Output to console is set to: ", self.PRINT_TO_CONSOLE)
@@ -468,6 +471,7 @@ class HwInfoReport:
             runtime_unit = "d"
 
         report = {
+            "custom_flags": self.CUSTOM_FLAGS,
             "version": self.version,
             "last_update": current_datetime.strftime("%Y-%m-%d %H:%M:%S"),
             "last_update_seconds": time.time(),
