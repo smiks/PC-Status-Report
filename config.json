@@ -25,6 +25,8 @@
   "max_net_downlink_kbps": 500000,
   "max_net_uplink_kbps": 100000,
   "include_process_monitoring": false,
+  "show_gui": true,
+  "log_size": 100,
   "customFlags": {
     "showServices": false
   }

@@ -1,4 +1,15 @@
-Version 2.0
+Version 3.0
+----------------------------
+New features:
+ - GUI
+ - new widget: Logs
+
+Improvements & changes:
+ - added log for tracking ERROR and INFO messages
+
+
+
+ Version 2.0
 ----------------------------
 New features:
  - multiple API endpoints

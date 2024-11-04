@@ -1,6 +1,7 @@
 import platform
 import sys
 import time
+import threading
 
 from datetime import datetime
 from json import load as jsload
@@ -11,6 +12,7 @@ import psutil
 import requests
 import keyboard
 
+from gui import GUI
 
 class HwInfoReport:
     def about(self):
@@ -26,7 +28,10 @@ class HwInfoReport:
             print(arg, *args)
 
     def __init__(self):
-        self.version = "2.0"
+        self.version = "3.0"
+
+        self.SHOW_GUI = False
+
         self.AVG_CPU_LOAD = {
             "1": 0,
             "5": 0,
@@ -111,8 +116,21 @@ class HwInfoReport:
 
         self.INCLUDE_PROCESS_MONITORING = False
 
+        self.LOGS = []
+        self.LOG_SIZE = 50
+
         self.CUSTOM_FLAGS = dict()
 
+    def appendToLogs(self, type_, content):
+        current_datetime = datetime.now()
+        timestamp = current_datetime.strftime("%Y-%m-%d %H:%M:%S")
+        self.LOGS.append({
+            "timestamp": timestamp,
+            "type": type_,
+            "content": content
+        })
+
+        self.LOGS = self.LOGS[-self.LOG_SIZE:]
     def resetStatistics(self):
         self.AVG_CPU_LOAD = {
             "1": 0,
@@ -189,6 +207,8 @@ class HwInfoReport:
             self.REMOTE_CONTROL_POLL_FREQUENCY = config['remote_control_poll_every_seconds']
             self.REMOTE_CONTROL_POLL_COMMANDS = config['remote_control_poll_commands']
             self.CUSTOM_FLAGS = config['customFlags']
+            self.SHOW_GUI = config['show_gui']
+            self.LOG_SIZE = config['log_size']
 
         print("\t\t Run analyze every {} second(s)" . format(self.RUN_CHECK_EVERY_SECONDS))
         print("\t\t Output to console is set to: ", self.PRINT_TO_CONSOLE)
@@ -450,6 +470,8 @@ class HwInfoReport:
         self.GPU_LOADS_ARCH["360"].append(gpu_load)
         self.GPU_LOADS_ARCH["720"].append(gpu_load)
 
+        return metrics
+
     def reportStatistic(self):
         metrics = self.get_system_metrics()
         hwinfo = self.getHardwareInfo()
@@ -534,7 +556,8 @@ class HwInfoReport:
                         "time": self.MAX_NET_UPLOAD_TIME
                     }
                 }
-            }
+            },
+            "logs": self.LOGS
         }
 
         for path, du in metrics['disk_usages'].items():
@@ -549,9 +572,11 @@ class HwInfoReport:
                 response = requests.post(url, json=report)
 
                 if response.status_code != 200:
+                    self.appendToLogs("ERROR", "Response code from {} was not OK " . format(url))
                     print("\t\t Response code from {} was not OK " . format(url))
                     print("\t\t Timestamp: ", current_datetime.strftime("%Y-%m-%d %H:%M:%S"))
                 else:
+                    self.appendToLogs("INFO", "Response sent to {}".format(url))
                     if self.PRINT_REPORT_TIMESTAMPS:
                         print("\t\t Report sent at: {}" . format(current_datetime))
             except:
@@ -617,11 +642,14 @@ class HwInfoReport:
                                 self.resetStatistics()
                                 self.LAST_EXECUTED_REMOTE_POLL_COMMAND = command
                                 self.LAST_EXECUTED_REMOTE_POLL_COMMAND_TIME = current_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                                self.appendToLogs("INFO", "Remote command {} from {} was successfully executed ".format(command, url))
                                 print("\t\t Remote command {} from {} was successfully executed ".format(command, url))
                                 requests.post(api['clear_queue_url'], json=data)
                         else:
+                            self.appendToLogs("ERROR", "Remote command {} from {} is not whitelisted ".format(command, url))
                             print("\t\t Remote command {} from {} is not whitelisted ".format(command, url))
                     except Exception as e:
+                        self.appendToLogs("ERROR", "Remote command from {} was not executed " . format(url))
                         print("\t\t Remote command from {} was not executed " . format(url))
                         print("\t\t Error: ", e)
             except:
@@ -636,9 +664,25 @@ class HwInfoReport:
         print()
         print("\t Preparing monitoring and reporting for {} " . format(self.UNIQUE_ID))
 
+        gui_closed = lambda: False
+        if self.SHOW_GUI:
+            print()
+            print("\t Prepare GUI")
+            gui_data = {
+                "version": self.version
+            }
+            gux = GUI(gui_data)
+            gui_closed = gux.get_gui_close_status
+            gui_thread = threading.Thread(target=gux.run)
+            gui_thread.start()
+            print("\t GUI ready")
+
         print()
+
         last_check = 0
-        while True:
+        metrics = dict()
+
+        while True and not gui_closed():
             time_now = time.time()
             self.NET_IO_END = psutil.net_io_counters(pernic=True)
             # run analyze every RUN_CHECK_EVERY_SECONDS seconds
@@ -646,8 +690,9 @@ class HwInfoReport:
                 try:
                     if self.PRINT_TO_CONSOLE:
                         self.printStatistic()
-                    self.analyze()
+                    metrics = self.analyze()
                 except Exception as e:
+                    self.appendToLogs("ERROR", "Exception during analyze: {}".format(e))
                     print("Exception [I]: ", e)
                     pass
                 last_check = time_now + self.RUN_CHECK_EVERY_SECONDS - sleepTime
@@ -656,10 +701,33 @@ class HwInfoReport:
                     try:
                         self.reportStatistic()
                     except Exception as e:
+                        self.appendToLogs("ERROR", "Exception during reportStatistics: {}" . format(e))
                         print("Exception [II]: ", e)
                         pass
                     self.LAST_REPORT_SEND = time_now + self.REPORT_FREQUENCY * 60
                 self.NET_IO_START = psutil.net_io_counters(pernic=True)
+
+                if self.SHOW_GUI:
+                    try:
+                        new_data = {
+                            "logs": self.LOGS,
+                            "cpu_load": self.CPU_LOADS_ARCH['1'][-1],
+                            "gpu_load": self.GPU_LOADS_ARCH['1'][-1],
+                            "total_download_kbps": metrics['network']['total_download_kbps'],
+                            "total_upload_kbps": metrics['network']['total_upload_kbps'],
+                            "downlink_load": metrics['network']['download_usage_perc'],
+                            "uplink_load": metrics['network']['upload_usage_perc'],
+                            "storage": {
+                                "disk_usages": metrics['disk_usages'],
+                                "disk_total_free_gb": metrics['disk_total_free_gb']
+                            }
+                        }
+                        gux.update_gui(new_data)
+                        print("\t Sent new sensor data to GUI")
+                    except Exception as e:
+                        self.appendToLogs("ERROR", "Exception during GUI render: {}".format(e))
+                        print("\t Exception [III]: ", e)
+                        pass
 
             if len(self.REMOTE_CONTROL_POLLING) > 0:
                 self.polling()
@@ -667,8 +735,18 @@ class HwInfoReport:
             time.sleep(sleepTime)
             # Check if 'Q' has been pressed to exit
             if keyboard.is_pressed("q"):
-                print("Exiting monitoring...")
+                print("\t Exiting monitoring...")
                 break
+
+            if gui_closed():
+                print("\t GUI closed. Program is closing...")
+                print("\t GUI window close status: ", gux.gui_closed)
+                gui_thread.join()
+                break
+
+        print("\t Joining GUI Thread")
+        print()
+        print("\t Exiting...")
         sys.exit()
 
 if __name__ == "__main__":
