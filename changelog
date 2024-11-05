@@ -1,3 +1,13 @@
+Version 3.1
+----------------------------
+New features:
+ - Added Config tab in GUI
+   - configuration of Unique ID and LOG SIZE
+
+Improvements & changes:
+ - log is reversed (latest info is at the top)
+
+
 Version 3.0
 ----------------------------
 New features:

@@ -1,4 +1,4 @@
-# PC-Status-Report v3.0
+# PC-Status-Report v3.1
 
 A simple Python program that gathers your system's info and sends it to the endpoint you define in config.json.
 It can be used as a remote monitoring of your PC.
@@ -26,7 +26,7 @@ Report sample:
 {
     "token_name": "token_value",
     "custom_flags": {...}
-    "version": "3.0",
+    "version": "3.1",
     "last_update": "2024-10-28 17:47:18",
     "last_update_seconds": 1730134038.587204,
     "start_time": 1730134031.564783,
