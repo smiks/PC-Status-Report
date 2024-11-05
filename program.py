@@ -5,6 +5,8 @@ import threading
 
 from datetime import datetime
 from json import load as jsload
+from json import dump as jsdump
+from json import JSONDecodeError
 
 import GPUtil
 import WinTmp
@@ -28,7 +30,7 @@ class HwInfoReport:
             print(arg, *args)
 
     def __init__(self):
-        self.version = "3.0"
+        self.version = "3.1"
 
         self.SHOW_GUI = False
 
@@ -214,6 +216,32 @@ class HwInfoReport:
         print("\t\t Output to console is set to: ", self.PRINT_TO_CONSOLE)
         print("\t\t Report to every {} minute(s) " . format(self.REPORT_FREQUENCY))
 
+    def update_json_file(self, key_, value):
+        file_path = "config.json"
+        # Read the existing JSON data from the file
+        try:
+            with open(file_path, 'r') as file:
+                data = jsload(file)
+        except FileNotFoundError:
+            #print(f"File not found: {file_path}")
+            return
+        except JSONDecodeError:
+            #print("Error decoding JSON from the file.")
+            return
+
+        # Update the JSON data
+        data[key_] = value
+
+        # Write the updated JSON data back to the file
+        with open(file_path, 'w') as file:
+            jsdump(data, file, indent=4)
+    def update_config_callback(self, key_, value_):
+        key_map = {
+            "UNIQUE_ID": "unique_id",
+            "LOG_SIZE": "log_size"
+        }
+        setattr(self, key_, value_)
+        self.update_json_file(key_map[key_], value_)
     def getHardwareInfo(self):
         cpu = platform.processor()
         system = platform.system()
@@ -557,7 +585,7 @@ class HwInfoReport:
                     }
                 }
             },
-            "logs": self.LOGS
+            "logs": self.LOGS[::-1]
         }
 
         for path, du in metrics['disk_usages'].items():
@@ -576,7 +604,7 @@ class HwInfoReport:
                     print("\t\t Response code from {} was not OK " . format(url))
                     print("\t\t Timestamp: ", current_datetime.strftime("%Y-%m-%d %H:%M:%S"))
                 else:
-                    self.appendToLogs("INFO", "Response sent to {}".format(url))
+                    self.appendToLogs("INFO", "Report sent to {}".format(url))
                     if self.PRINT_REPORT_TIMESTAMPS:
                         print("\t\t Report sent at: {}" . format(current_datetime))
             except:
@@ -638,13 +666,21 @@ class HwInfoReport:
                     try:
                         command = response_data['command'] if 'command' in response_data else ''
                         if command.lower() in whitelisted_commands:
+
                             if command.lower() == 'resetstatistics':
                                 self.resetStatistics()
-                                self.LAST_EXECUTED_REMOTE_POLL_COMMAND = command
-                                self.LAST_EXECUTED_REMOTE_POLL_COMMAND_TIME = current_datetime.strftime("%Y-%m-%d %H:%M:%S")
                                 self.appendToLogs("INFO", "Remote command {} from {} was successfully executed ".format(command, url))
-                                print("\t\t Remote command {} from {} was successfully executed ".format(command, url))
+                                self._print("\t\t Remote command {} from {} was successfully executed ".format(command, url))
                                 requests.post(api['clear_queue_url'], json=data)
+
+                            elif command.lower() == 'clearlog':
+                                self.LOGS = []
+                                self.appendToLogs("INFO", "Remote command {} from {} was successfully executed ".format(command, url))
+                                self._print("\t\t Remote command {} from {} was successfully executed ".format(command, url))
+                                requests.post(api['clear_queue_url'], json=data)
+
+                            self.LAST_EXECUTED_REMOTE_POLL_COMMAND = command
+                            self.LAST_EXECUTED_REMOTE_POLL_COMMAND_TIME = current_datetime.strftime("%Y-%m-%d %H:%M:%S")
                         else:
                             self.appendToLogs("ERROR", "Remote command {} from {} is not whitelisted ".format(command, url))
                             print("\t\t Remote command {} from {} is not whitelisted ".format(command, url))
@@ -669,7 +705,12 @@ class HwInfoReport:
             print()
             print("\t Prepare GUI")
             gui_data = {
-                "version": self.version
+                "version": self.version,
+                "config": {
+                    "unique_id": self.UNIQUE_ID,
+                    "log_size": self.LOG_SIZE
+                },
+                "update_config_callback": self.update_config_callback
             }
             gux = GUI(gui_data)
             gui_closed = gux.get_gui_close_status
