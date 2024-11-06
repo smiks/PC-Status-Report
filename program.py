@@ -30,7 +30,7 @@ class HwInfoReport:
             print(arg, *args)
 
     def __init__(self):
-        self.version = "3.1"
+        self.version = "3.2"
 
         self.SHOW_GUI = False
 
@@ -121,6 +121,7 @@ class HwInfoReport:
         self.LOGS = []
         self.LOG_SIZE = 50
 
+        self.USE_MODULES = []
         self.CUSTOM_FLAGS = dict()
 
     def appendToLogs(self, type_, content):
@@ -208,9 +209,10 @@ class HwInfoReport:
             self.REMOTE_CONTROL_POLLING = config['remote_control_polling']
             self.REMOTE_CONTROL_POLL_FREQUENCY = config['remote_control_poll_every_seconds']
             self.REMOTE_CONTROL_POLL_COMMANDS = config['remote_control_poll_commands']
-            self.CUSTOM_FLAGS = config['customFlags']
             self.SHOW_GUI = config['show_gui']
             self.LOG_SIZE = config['log_size']
+            self.USE_MODULES = config['use_modules']
+            self.CUSTOM_FLAGS = config['customFlags']
 
         print("\t\t Run analyze every {} second(s)" . format(self.RUN_CHECK_EVERY_SECONDS))
         print("\t\t Output to console is set to: ", self.PRINT_TO_CONSOLE)
@@ -500,6 +502,14 @@ class HwInfoReport:
 
         return metrics
 
+    def module_qbittorent(self):
+        from modules.qbittorent import qbittorent
+        qb = qbittorent.QBittorent()
+        qb.connect()
+        torrents = qb.get_torrents()
+        return {
+            "torrents": torrents
+        }
     def reportStatistic(self):
         metrics = self.get_system_metrics()
         hwinfo = self.getHardwareInfo()
@@ -587,6 +597,16 @@ class HwInfoReport:
             },
             "logs": self.LOGS[::-1]
         }
+
+        # update report with info from other modules
+        if len(self.USE_MODULES) > 0:
+            report['modules'] = dict()
+        for module in self.USE_MODULES:
+            if module.lower() == 'qbittorent':
+                ret = self.module_qbittorent()
+                report['modules']['qbittorent'] = {
+                    "torrents": ret['torrents']
+                }
 
         for path, du in metrics['disk_usages'].items():
             report['current']['disks']['per_disk'][path] = du
@@ -700,6 +720,11 @@ class HwInfoReport:
         print()
         print("\t Preparing monitoring and reporting for {} " . format(self.UNIQUE_ID))
 
+        if len(self.USE_MODULES) > 0:
+            print()
+            print("\t Modules in use: {} " . format(self.USE_MODULES))
+            print()
+
         gui_closed = lambda: False
         if self.SHOW_GUI:
             print()
@@ -739,6 +764,7 @@ class HwInfoReport:
                 last_check = time_now + self.RUN_CHECK_EVERY_SECONDS - sleepTime
 
                 if time_now > self.LAST_REPORT_SEND:
+                    self.reportStatistic()
                     try:
                         self.reportStatistic()
                     except Exception as e:

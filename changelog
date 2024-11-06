@@ -1,4 +1,13 @@
-Version 3.1
+Version 3.2
+----------------------------
+New features:
+ - Added support for extra modules
+   - added module qBittorrent
+
+Improvements & changes:
+ - log is reversed (latest info is at the top)
+
+ Version 3.1
 ----------------------------
 New features:
  - Added Config tab in GUI
