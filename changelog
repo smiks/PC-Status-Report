@@ -1,4 +1,13 @@
-Version 3.2
+Version 3.3
+----------------------------
+New features:
+ - File log for errors
+
+Improvements & changes:
+ - bugfix GUI wrong storage info
+ - minor speedup optimization
+
+ Version 3.2
 ----------------------------
 New features:
  - Added support for extra modules

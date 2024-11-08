@@ -16,6 +16,15 @@ import keyboard
 
 from gui import GUI
 
+def writeLog(file_path, text):
+    current_datetime = datetime.now()
+    timestamp = current_datetime.strftime("%Y-%m-%d %H:%M:%S")
+    text = "[{}] :: {}\n" . format(timestamp, text)
+    with open(file_path, 'a') as file:  # 'a' mode opens the file for appending
+        file.write(text)
+
+def appendErrorLog(text):
+    writeLog('./error_log', text)
 class HwInfoReport:
     def about(self):
         print("\n")
@@ -30,7 +39,7 @@ class HwInfoReport:
             print(arg, *args)
 
     def __init__(self):
-        self.version = "3.2"
+        self.version = "3.3"
 
         self.SHOW_GUI = False
 
@@ -623,6 +632,7 @@ class HwInfoReport:
                     self.appendToLogs("ERROR", "Response code from {} was not OK " . format(url))
                     print("\t\t Response code from {} was not OK " . format(url))
                     print("\t\t Timestamp: ", current_datetime.strftime("%Y-%m-%d %H:%M:%S"))
+                    appendErrorLog("Response code from {} was not OK " . format(url))
                 else:
                     self.appendToLogs("INFO", "Report sent to {}".format(url))
                     if self.PRINT_REPORT_TIMESTAMPS:
@@ -661,11 +671,11 @@ class HwInfoReport:
         print("-----" * 20)
 
     def polling(self):
-        current_datetime = datetime.now()
-        whitelisted_commands = [cmd.lower() for cmd in self.REMOTE_CONTROL_POLL_COMMANDS]
-
         if time.time() < self.LAST_REMOTE_CONTROL_POLL_RUNTIME:
             return
+
+        current_datetime = datetime.now()
+        whitelisted_commands = [cmd.lower() for cmd in self.REMOTE_CONTROL_POLL_COMMANDS]
 
         self.LAST_REMOTE_CONTROL_POLL_RUNTIME = time.time() + self.REMOTE_CONTROL_POLL_FREQUENCY
 
@@ -704,8 +714,10 @@ class HwInfoReport:
                         else:
                             self.appendToLogs("ERROR", "Remote command {} from {} is not whitelisted ".format(command, url))
                             print("\t\t Remote command {} from {} is not whitelisted ".format(command, url))
+                            appendErrorLog("Remote command {} from {} is not whitelisted ".format(command, url))
                     except Exception as e:
                         self.appendToLogs("ERROR", "Remote command from {} was not executed " . format(url))
+                        appendErrorLog("Remote command from {} was not executed " . format(url))
                         print("\t\t Remote command from {} was not executed " . format(url))
                         print("\t\t Error: ", e)
             except:
@@ -759,8 +771,8 @@ class HwInfoReport:
                     metrics = self.analyze()
                 except Exception as e:
                     self.appendToLogs("ERROR", "Exception during analyze: {}".format(e))
+                    appendErrorLog("Exception during analyze: {} :: {}".format(e, e.args[0]))
                     print("Exception [I]: ", e)
-                    pass
                 last_check = time_now + self.RUN_CHECK_EVERY_SECONDS - sleepTime
 
                 if time_now > self.LAST_REPORT_SEND:
@@ -769,8 +781,8 @@ class HwInfoReport:
                         self.reportStatistic()
                     except Exception as e:
                         self.appendToLogs("ERROR", "Exception during reportStatistics: {}" . format(e))
+                        appendErrorLog("Exception during reportStatistics: {} :: {}".format(e, e.args[0]))
                         print("Exception [II]: ", e)
-                        pass
                     self.LAST_REPORT_SEND = time_now + self.REPORT_FREQUENCY * 60
                 self.NET_IO_START = psutil.net_io_counters(pernic=True)
 
@@ -793,8 +805,8 @@ class HwInfoReport:
                         print("\t Sent new sensor data to GUI")
                     except Exception as e:
                         self.appendToLogs("ERROR", "Exception during GUI render: {}".format(e))
+                        appendErrorLog("Exception during GUI render: {} :: {}".format(e, e.args))
                         print("\t Exception [III]: ", e)
-                        pass
 
             if len(self.REMOTE_CONTROL_POLLING) > 0:
                 self.polling()
@@ -808,10 +820,11 @@ class HwInfoReport:
             if gui_closed():
                 print("\t GUI closed. Program is closing...")
                 print("\t GUI window close status: ", gux.gui_closed)
+                print("\t Joining GUI Thread")
                 gui_thread.join()
+                print("\t GUI Thread merged with the main thread")
                 break
 
-        print("\t Joining GUI Thread")
         print()
         print("\t Exiting...")
         sys.exit()

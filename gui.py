@@ -71,24 +71,26 @@ class GUI():
         for log in logs:
             txt += "[{}] :: {} :: {}\n" . format(log['timestamp'], log['type'], log['content'])
 
-        tk.Label(self.frames['log'], text=txt, anchor="w").pack(fill="x", padx=5, pady=5)
+        tk.Label(self.frames['log'], text=txt, anchor="nw").pack(fill="x", padx=5, pady=5)
 
 
         storage = data['storage']
         perdisk = dict()
-        totalDisk = 0
+        total_disk = 0
         for path, du in storage['disk_usages'].items():
             perdisk[path] = du
         for path, info in perdisk.items():
             tmp = freeSpace2Total(info['free_gb'], info['free_perc'])
-            totalDisk += tmp
+            total_disk += tmp
 
-        txt = "Total free space: {} / {}\n".format(gb2tb(storage['disk_total_free_gb']), gb2tb(totalDisk))
+        total_used = total_disk - storage['disk_total_free_gb']
+        txt = "Total disk usage: {} / {} \t \n".format(gb2tb(total_used), gb2tb(total_disk))
+        txt += "Total free space: {} \t \t  \n" . format(gb2tb(storage['disk_total_free_gb']))
         txt += "\n"
         for path, info in perdisk.items():
             total = freeSpace2Total(info['free_gb'], info['free_perc'])
             used = total - info['free_gb']
-            txt += "{} :: {} / {} ({}%) \n" . format(path, gb2tb(used), gb2tb(total), info['free_perc'])
+            txt += "{}\t {} / {} ({}%) \n" . format(path, gb2tb(used), gb2tb(total), info['free_perc'])
 
         self.labels['storage'].config(text=txt)
 
@@ -131,7 +133,7 @@ class GUI():
 
     def storage_tab(self):
         self.labels['storage'] = tk.Label(self.tabs[1], text="", font=("Arial", 10))
-        self.labels['storage'].pack(anchor="w", padx=10, pady=5)
+        self.labels['storage'].pack(anchor="nw", padx=10, pady=5)
 
     def log_tab(self):
         self.canvases['log'] = tk.Canvas(self.tabs[2])
