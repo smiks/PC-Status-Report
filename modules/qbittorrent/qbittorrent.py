@@ -1,6 +1,7 @@
 import requests
 from json import load as jsload
 
+from modules.handlers import appendErrorLog
 class QBittorrent():
     def __init__(self):
         self.url = ''
@@ -29,10 +30,17 @@ class QBittorrent():
             'username': self.username,
             'password': self.password
         }
-        response = self.session.post("{}/api/v2/auth/login" . format(self.url), data=login_data)
-        response.raise_for_status()
+        noErrors = True
+        try:
+            response = self.session.post("{}/api/v2/auth/login" . format(self.url), data=login_data)
+            response.raise_for_status()
+        except Exception as e:
+            noErrors = False
+            msg = "Could not connect to qBitTorrent API. URL: {}" . format(self.url)
+            print("[ERROR] :: [QBIT] :: {}" . format(msg))
+            appendErrorLog(msg)
 
-        if response.text == "Ok.":
+        if noErrors and response.text == "Ok.":
             self.connected = True
 
     def get_torrents(self):
@@ -98,9 +106,10 @@ class QBittorrent():
         }
 
     def get_torrent_version(self):
-        response = self.session.post("{}/api/v2/app/version" . format(self.url))
-        return response.text
-
+        if self.connected:
+            response = self.session.post("{}/api/v2/app/version" . format(self.url))
+            return response.text
+        return ""
 if __name__ == "__main__":
     qb = QBittorrent()
     qb.connect()

@@ -39,7 +39,7 @@ class HwInfoReport:
             print(arg, *args)
 
     def __init__(self):
-        self.version = "3.4"
+        self.version = "3.4.1"
 
         self.SHOW_GUI = False
 

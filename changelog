@@ -1,3 +1,8 @@
+Version 3.4.1
+----------------------------
+Improvements & changes:
+ - bugfix: error handling for failed qbittorrent connection
+
 Version 3.4
 ----------------------------
 New features:
