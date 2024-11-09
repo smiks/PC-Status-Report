@@ -37,9 +37,8 @@ class HwInfoReport:
     def _print(self, arg, *args):
         if self.PRINT_TO_CONSOLE:
             print(arg, *args)
-
     def __init__(self):
-        self.version = "3.4.1"
+        self.version = "3.4.2"
 
         self.SHOW_GUI = False
 
@@ -525,9 +524,11 @@ class HwInfoReport:
         qb = qbittorrent.QBittorrent()
         qb.connect()
         if command == 'resume':
-            qb.resume_torrent(torrent_hash)
+            resp = qb.resume_torrent(torrent_hash)
+            self.appendToLogs("INFO", "{}. Torrent: {} ".format(resp['msg'], resp['torrentHash']))
         elif command == 'pause':
-            qb.resume_torrent(torrent_hash)
+            resp = qb.pause_torrent(torrent_hash)
+            self.appendToLogs("INFO", "{}. Torrent: {} ".format(resp['msg'], resp['torrentHash']))
     def reportStatistic(self):
         metrics = self.get_system_metrics()
         hwinfo = self.getHardwareInfo()

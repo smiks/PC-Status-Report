@@ -52,9 +52,25 @@ class QBittorrent():
         if not self.connected:
             return []
 
-        torrents_response = self.session.get("{}/api/v2/torrents/info" . format(self.url))
+        self.torrents = {
+            "downloading": [],
+            "uploading": [],
+            "completed": []
+        }
+        torrents_response = self.session.get(
+            "{}/api/v2/torrents/info?filter=downloading&sort=added_on&reverse=true".format(self.url))
         torrents_response.raise_for_status()
-        self.torrents = torrents_response.json()
+        self.torrents['downloading'] = torrents_response.json()
+
+        torrents_response = self.session.get(
+            "{}/api/v2/torrents/info?filter=uploading&sort=added_on&reverse=true".format(self.url))
+        torrents_response.raise_for_status()
+        self.torrents['uploading'] = torrents_response.json()
+
+        torrents_response = self.session.get(
+            "{}/api/v2/torrents/info?filter=completed&sort=added_on&reverse=true".format(self.url))
+        torrents_response.raise_for_status()
+        self.torrents['completed'] = torrents_response.json()
         return self.torrents
 
     def resume_torrent(self, torrent_hash):
@@ -90,8 +106,8 @@ class QBittorrent():
         if not self.connected:
             return None
 
-        response = self.session.post("{}/api/v2/torrents/stop" . format(self.url), data={'hashes': torrent_hash})
-
+        url = "{}/api/v2/torrents/stop?hashes={}".format(self.url, torrent_hash)
+        response = self.session.post(url, data={'hashes': torrent_hash})
         if response.status_code == 200:
             return {
                 "status": "OK",
@@ -110,15 +126,23 @@ class QBittorrent():
             response = self.session.post("{}/api/v2/app/version" . format(self.url))
             return response.text
         return ""
+
 if __name__ == "__main__":
     qb = QBittorrent()
     qb.connect()
     torrents = qb.get_torrents()
-    for torr in torrents:
-        hash = torr['hash']
-        print("Resuming torrent: ", hash)
-        resp = qb.pause_torrent(hash)
-        print("Resp: ", resp)
+    print("Downloading")
+    for torr in torrents['downloading']:
+        print(torr)
+
+    print("Uploading")
+    for torr in torrents['uploading']:
+        print(torr)
+
+    print("Completed")
+    for torr in torrents['completed']:
+        print(torr)
+
 
     qb.get_torrent_version()
 
