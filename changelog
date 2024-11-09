@@ -1,3 +1,10 @@
+Version 3.4.2
+----------------------------
+Improvements & changes:
+ - bugfix: qbittorrent pause command didn't work
+ - improvement: list of torrents is not split into downloading, uploading and completed
+ - improvement: torrents are now sorted by added_on date DESC
+
 Version 3.4.1
 ----------------------------
 Improvements & changes:
