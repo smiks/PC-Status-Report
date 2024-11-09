@@ -1,3 +1,12 @@
+Version 3.4
+----------------------------
+New features:
+- remote control (resume/pause) for qBitTorrent
+
+Improvements & changes:
+ - bugfix GUI wrong storage info
+
+
 Version 3.3
 ----------------------------
 New features:

@@ -6,12 +6,12 @@ from tkinter import ttk
 
 def gb2tb(gb):
     if gb > 1024:
-        return "{} TB" . format(gb // 1024)
+        return "{} TB" . format(round(gb / 1024, 1))
     return "{} GB" . format(gb)
 
 def freeSpace2Total(free, perc):
     invert = 1 - (perc/100)
-    return free//invert
+    return round(free/invert, 1)
 class GUI():
 
     def __init__(self, data):

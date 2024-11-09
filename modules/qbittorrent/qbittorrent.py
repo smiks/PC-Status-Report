@@ -1,7 +1,7 @@
 import requests
 from json import load as jsload
 
-class QBittorent():
+class QBittorrent():
     def __init__(self):
         self.url = ''
         self.username = ''
@@ -13,7 +13,7 @@ class QBittorent():
         self.load_config()
 
     def load_config(self):
-        path = "./modules/qbittorent/config.json"
+        path = "./modules/qbittorrent/config.json"
         if __name__ == "__main__":
             path = "config.json"
         with open(path, "r") as file:
@@ -59,9 +59,7 @@ class QBittorent():
             return None
 
         url = "{}/api/v2/torrents/start?hashes={}" . format(self.url, torrent_hash)
-        print("Calling URL: ", url)
         response = self.session.post(url, data={'hashes': torrent_hash})
-        print("RESPONSE: ", response.text)
         if response.status_code == 200:
             return {
                 "status": "OK",
@@ -104,7 +102,7 @@ class QBittorent():
         return response.text
 
 if __name__ == "__main__":
-    qb = QBittorent()
+    qb = QBittorrent()
     qb.connect()
     torrents = qb.get_torrents()
     for torr in torrents:

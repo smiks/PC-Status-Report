@@ -39,7 +39,7 @@ class HwInfoReport:
             print(arg, *args)
 
     def __init__(self):
-        self.version = "3.3"
+        self.version = "3.4"
 
         self.SHOW_GUI = False
 
@@ -511,14 +511,23 @@ class HwInfoReport:
 
         return metrics
 
-    def module_qbittorent(self):
-        from modules.qbittorent import qbittorent
-        qb = qbittorent.QBittorent()
+    def module_qbittorrent(self):
+        from modules.qbittorrent import qbittorrent
+        qb = qbittorrent.QBittorrent()
         qb.connect()
         torrents = qb.get_torrents()
         return {
             "torrents": torrents
         }
+
+    def remote_control_qbittorrent(self, command, torrent_hash):
+        from modules.qbittorrent import qbittorrent
+        qb = qbittorrent.QBittorrent()
+        qb.connect()
+        if command == 'resume':
+            qb.resume_torrent(torrent_hash)
+        elif command == 'pause':
+            qb.resume_torrent(torrent_hash)
     def reportStatistic(self):
         metrics = self.get_system_metrics()
         hwinfo = self.getHardwareInfo()
@@ -611,9 +620,9 @@ class HwInfoReport:
         if len(self.USE_MODULES) > 0:
             report['modules'] = dict()
         for module in self.USE_MODULES:
-            if module.lower() == 'qbittorent':
-                ret = self.module_qbittorent()
-                report['modules']['qbittorent'] = {
+            if module.lower() == 'qbittorrent':
+                ret = self.module_qbittorrent()
+                report['modules']['qbittorrent'] = {
                     "torrents": ret['torrents']
                 }
 
@@ -705,6 +714,14 @@ class HwInfoReport:
 
                             elif command.lower() == 'clearlog':
                                 self.LOGS = []
+                                self.appendToLogs("INFO", "Remote command {} from {} was successfully executed ".format(command, url))
+                                self._print("\t\t Remote command {} from {} was successfully executed ".format(command, url))
+                                requests.post(api['clear_queue_url'], json=data)
+
+                            elif command.lower() == "qbittorrent":
+                                subcommand = response_data['subcommand'] if 'subcommand' in response_data else ''
+                                torrent_hash = response_data['torrentHash'] if 'torrentHash' in response_data else ''
+                                self.remote_control_qbittorrent(subcommand, torrent_hash)
                                 self.appendToLogs("INFO", "Remote command {} from {} was successfully executed ".format(command, url))
                                 self._print("\t\t Remote command {} from {} was successfully executed ".format(command, url))
                                 requests.post(api['clear_queue_url'], json=data)

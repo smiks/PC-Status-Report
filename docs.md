@@ -29,7 +29,7 @@
     "remote_control_poll_every_seconds": X,
     
     // WHITELISTED POLLING COMMANDS - only those can be executed
-    // AVAILABLE COMMANDS: "resetStatistics", "clearLog"
+    // AVAILABLE COMMANDS: "resetStatistics", "clearLog", "qbittorrent"
     "remote_control_poll_commands":  []
     
     "unique_id": ID OF YOUR COMPUTER,
@@ -62,7 +62,7 @@
     "log_size": 50,
     
     // LIST OF WHAT ADDITIONAL MODULES YOU WANT TO USE
-    // AVAILABLE: "qbittorent"
+    // AVAILABLE: "qbittorrent"
     "use_modules": [],
     
     // CUSTOM FLAGS YOU WANT TO SET, SENT WITH EVERY REQUEST TO THE ENDPOINT
