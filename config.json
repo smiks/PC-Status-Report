@@ -15,7 +15,7 @@
     }
   ],
   "remote_control_poll_every_seconds": 60,
-  "remote_control_poll_commands": ["resetStatistics"],
+  "remote_control_poll_commands": ["resetStatistics", "qbittorrent"],
   "unique_id": "MyPC",
   "send_report_every_mins": 1,
   "run_check_every_seconds": 10,
@@ -27,6 +27,7 @@
   "include_process_monitoring": false,
   "show_gui": true,
   "log_size": 100,
+  "use_modules": ["qbittorrent"],
   "customFlags": {
     "showServices": false
   }
